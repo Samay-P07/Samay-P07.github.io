@@ -24,7 +24,7 @@ export default function Footer() {
               <span className="logo-badge">ENGINEERING</span>
             </div>
             <p className="footer-subtitle">
-              Software Developer &amp; Full-Stack Engineer <span className="sep">//</span> TU Chemnitz, Germany
+              Software Developer | Full-Stack &amp; Machine Learning <span className="sep">//</span> TU Chemnitz, Germany
             </p>
           </div>
 

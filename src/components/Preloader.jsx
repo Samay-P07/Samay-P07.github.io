@@ -47,7 +47,7 @@ export default function Preloader({ onComplete }) {
     >
       <div className="pre-inner">
         <p className="pre-mark">Samay Patel</p>
-        <p className="pre-submark">Software Developer // M.Sc. Web Engineering</p>
+        <p className="pre-submark">Software Developer | Full-Stack &amp; Machine Learning</p>
         
         <div className="pre-rule">
           <span className="pre-bar-fill" style={{ width: `${progress}%` }} />

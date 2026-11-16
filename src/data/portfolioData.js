@@ -1,7 +1,7 @@
 export const PORTFOLIO_DATA = {
   personal: {
     name: "Samay Patel",
-    title: "Software Developer | Full-Stack Developer",
+    title: "Software Developer | Full-Stack & Machine Learning",
     subtitle: "M.Sc. Web Engineering Student at TU Chemnitz",
     tagline: "Building practical web applications and intelligent solutions through software engineering, backend development, and machine learning.",
     location: "Chemnitz, Germany",

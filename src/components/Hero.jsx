@@ -41,7 +41,7 @@ export default function Hero() {
           {/* Left Column: Heading, Subtitle, Pitch & Actions */}
           <div className="hero-text-col">
             <div className="section-tag" style={{ marginBottom: '1rem' }}>
-              <span>SOFTWARE DEVELOPER // M.SC. WEB ENGINEERING</span>
+              <span>SOFTWARE DEVELOPER // FULL-STACK &amp; MACHINE LEARNING</span>
             </div>
 
             <h1 className="hero-name">
@@ -49,7 +49,7 @@ export default function Hero() {
             </h1>
 
             <p className="hero-title">
-              Software Developer &amp; Full-Stack Engineer
+              Software Developer | Full-Stack &amp; Machine Learning
               <span className="hero-subline">TU Chemnitz, Germany</span>
             </p>
 
@@ -142,7 +142,7 @@ export default function Hero() {
                 <div className="porthole-glass">
                   <img
                     src={PORTFOLIO_DATA.personal.profileImage}
-                    alt="Samay Patel - Software Developer"
+                    alt="Samay Patel - Software Developer | Full-Stack & Machine Learning"
                     width="320"
                     height="320"
                     loading="eager"
