@@ -27,14 +27,15 @@ export const PORTFOLIO_DATA = {
   skills: {
     categories: [
       { id: "all", label: "All Skills" },
-      { id: "programming", label: "Programming" },
+      { id: "programming", label: "Programming Languages" },
       { id: "frontend-backend", label: "Frontend & Backend" },
       { id: "ml-ai", label: "Machine Learning & AI" },
       { id: "databases", label: "Databases" },
-      { id: "devops-tools", label: "DevOps & Tools" }
+      { id: "devops-tools", label: "DevOps & Tools" },
+      { id: "cloud", label: "Cloud Platforms" }
     ],
     items: [
-      // Programming (4)
+      // Programming Languages (4)
       { name: "Python", category: "programming", type: "Programming", desc: "Core language for backend architectures, data pipelines & machine learning" },
       { name: "JavaScript (ES6+)", category: "programming", type: "Programming", desc: "Modern ECMAScript for interactive frontends & responsive client workflows" },
       { name: "C++", category: "programming", type: "Programming", desc: "Object-oriented programming, data structures & systems foundational algorithms" },
@@ -66,19 +67,19 @@ export const PORTFOLIO_DATA = {
       { name: "SQLAlchemy", category: "databases", type: "Databases", desc: "SQL toolkit & Object-Relational Mapper (ORM) for Python applications" },
       { name: "SQL", category: "databases", type: "Databases", desc: "Complex relational querying, aggregation, filtering & schema design" },
 
-      // DevOps & Cloud (5) -> Category: 'devops-tools'
-      { name: "Docker", category: "devops-tools", type: "DevOps & Cloud", desc: "Containerization, reproducible runtimes & multi-stage Dockerfiles" },
-      { name: "GitHub Actions", category: "devops-tools", type: "DevOps & Cloud", desc: "Continuous Integration & Continuous Delivery (CI/CD) pipelines" },
-      { name: "Vercel", category: "devops-tools", type: "DevOps & Cloud", desc: "Cloud serverless deployment, edge hosting & automated git preview builds" },
-      { name: "Render", category: "devops-tools", type: "DevOps & Cloud", desc: "Cloud application hosting with managed web services & worker instances" },
-      { name: "Neon", category: "devops-tools", type: "DevOps & Cloud", desc: "Serverless cloud PostgreSQL with branching & autoscaling storage" },
+      // DevOps & Tools (7) -> Category: 'devops-tools'
+      { name: "Docker", category: "devops-tools", type: "DevOps & Tools", desc: "Containerization, reproducible runtimes & multi-stage Dockerfiles" },
+      { name: "GitHub Actions", category: "devops-tools", type: "DevOps & Tools", desc: "Continuous Integration & Continuous Delivery (CI/CD) pipelines" },
+      { name: "Pytest", category: "devops-tools", type: "DevOps & Tools", desc: "Test automation, fixtures, parametrized tests & regression suites" },
+      { name: "Playwright", category: "devops-tools", type: "DevOps & Tools", desc: "End-to-end browser automation & cross-browser integration testing" },
+      { name: "Git", category: "devops-tools", type: "DevOps & Tools", desc: "Distributed version control, branching workflows & commit tracking" },
+      { name: "GitHub", category: "devops-tools", type: "DevOps & Tools", desc: "Source code collaboration, pull requests, issue tracking & releases" },
+      { name: "Visual Studio Code", category: "devops-tools", type: "DevOps & Tools", desc: "Primary development IDE with extensions, linting & debugging" },
 
-      // Testing & Tools (5) -> Category: 'devops-tools'
-      { name: "Pytest", category: "devops-tools", type: "Testing & Tools", desc: "Test automation, fixtures, parametrized tests & regression suites" },
-      { name: "Playwright", category: "devops-tools", type: "Testing & Tools", desc: "End-to-end browser automation & cross-browser integration testing" },
-      { name: "Git", category: "devops-tools", type: "Testing & Tools", desc: "Distributed version control, branching workflows & commit tracking" },
-      { name: "GitHub", category: "devops-tools", type: "Testing & Tools", desc: "Source code collaboration, pull requests, issue tracking & releases" },
-      { name: "Visual Studio Code", category: "devops-tools", type: "Testing & Tools", desc: "Primary development IDE with extensions, linting & debugging" }
+      // Cloud Platforms (3) -> Category: 'cloud'
+      { name: "Vercel", category: "cloud", type: "Cloud Platforms", desc: "Cloud serverless deployment, edge hosting & automated git preview builds" },
+      { name: "Render", category: "cloud", type: "Cloud Platforms", desc: "Cloud application hosting with managed web services & worker instances" },
+      { name: "Neon", category: "cloud", type: "Cloud Platforms", desc: "Serverless cloud PostgreSQL with branching & autoscaling storage" }
     ]
   },
 

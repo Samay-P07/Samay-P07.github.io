@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
-import { RotateCcw, Info, Sparkles, CheckCircle2 } from 'lucide-react';
+import { RotateCcw, Sparkles, Layers, Cpu } from 'lucide-react';
 import { PORTFOLIO_DATA } from '../data/portfolioData';
 
-// Pure synchronous WebGL availability check
+// Pure synchronous WebGL support check
 const checkWebGLSupport = () => {
   if (typeof window === 'undefined') return true;
   try {
@@ -20,67 +20,59 @@ const checkWebGLSupport = () => {
 export default function Skills() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedSkill, setSelectedSkill] = useState(null);
-  const [hoveredSkill, setHoveredSkill] = useState(null);
   const [webglSupported] = useState(checkWebGLSupport);
 
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
-  const labelsContainerRef = useRef(null);
-  const labelElementsRef = useRef([]);
 
-  // Globe interaction state
-  const rotationRef = useRef({ x: 0.12, y: 0.35 });
-  const velocityRef = useRef({ x: 0, y: 0.0015 });
-  const isDraggingRef = useRef(false);
-  const lastMousePosRef = useRef({ x: 0, y: 0 });
-  const resetTargetRef = useRef(null);
+  // Mouse parallax and glow state
+  const mouseStateRef = useRef({
+    targetX: 0,
+    targetY: 0,
+    currentX: 0,
+    currentY: 0,
+    isHovered: false,
+    glowIntensity: 0.18,
+    targetGlow: 0.18,
+    dragActive: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    manualRotY: 0,
+    manualRotX: 0
+  });
 
   const categories = PORTFOLIO_DATA.skills.categories;
-  const skills = PORTFOLIO_DATA.skills.items;
+  const allSkills = PORTFOLIO_DATA.skills.items;
 
-  // Calculate Fibonacci Golden Spiral 3D points on sphere for 32 skills
-  const skillPoints = useMemo(() => {
-    const count = skills.length;
-    const phi = Math.PI * (3 - Math.sqrt(5)); // Golden angle ~2.39996 rad
+  // Filter skills according to active category tab
+  const displayedSkills = allSkills.filter((item) => {
+    if (activeCategory === 'all') return true;
+    return item.category === activeCategory;
+  });
 
-    return skills.map((skill, i) => {
-      const y = 1 - (i / (count - 1)) * 2; // from 1 down to -1
-      const radiusAtY = Math.sqrt(Math.max(0, 1 - y * y));
-      const theta = phi * i;
-
-      const x = Math.cos(theta) * radiusAtY;
-      const z = Math.sin(theta) * radiusAtY;
-
-      return {
-        ...skill,
-        index: i,
-        // Normalized direction vector from center
-        dir: new THREE.Vector3(x, y, z).normalize()
-      };
-    });
-  }, [skills]);
-
-  // Handle smooth reset view
-  const handleResetRotation = useCallback(() => {
-    resetTargetRef.current = { x: 0.1, y: 0.4 };
-    velocityRef.current = { x: 0, y: 0.0015 };
+  // Handle resetting the Earth orientation
+  const handleResetEarth = useCallback(() => {
+    mouseStateRef.current.manualRotX = 0;
+    mouseStateRef.current.manualRotY = 0;
+    mouseStateRef.current.targetX = 0;
+    mouseStateRef.current.targetY = 0;
   }, []);
 
-  // Three.js 3D Earth Globe Engine
+  // Three.js 3D Medium Earth with Interactive Mouse Parallax & Atmospheric Glow
   useEffect(() => {
     const container = containerRef.current;
     const canvas = canvasRef.current;
-    if (!container || !canvas) return;
+    if (!container || !canvas || !webglSupported) return;
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    let width = container.clientWidth || 780;
-    let height = container.clientHeight || 560;
+    let width = container.clientWidth || 460;
+    let height = container.clientHeight || 460;
 
     // 1. Scene & Camera
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
-    camera.position.z = 420;
+    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1200);
+    camera.position.z = 440;
 
     // 2. WebGL Renderer
     let renderer;
@@ -97,35 +89,33 @@ export default function Skills() {
       return;
     }
 
-    // 3. Globe Group
-    const globeGroup = new THREE.Group();
-    scene.add(globeGroup);
+    // 3. Earth Globe Group
+    const earthGroup = new THREE.Group();
+    scene.add(earthGroup);
 
-    // Responsive globe radius
-    const globeRadius = Math.min(width, height) * 0.28;
-    const labelRadius = globeRadius * 1.34;
+    // Balanced medium Earth radius
+    const globeRadius = Math.min(width, height) * 0.27;
 
-    // A. Dark Cosmic Earth Sphere Core
-    const sphereGeo = new THREE.SphereGeometry(globeRadius, 36, 36);
+    // A. Cosmic Earth Dark Core Sphere
+    const sphereGeo = new THREE.SphereGeometry(globeRadius, 40, 40);
     const sphereMat = new THREE.MeshPhongMaterial({
-      color: 0x060c1d,
-      emissive: 0x040814,
+      color: 0x050c1e,
+      emissive: 0x030712,
       specular: 0x3b86ff,
-      shininess: 18,
+      shininess: 24,
       transparent: true,
-      opacity: 0.94
+      opacity: 0.96
     });
     const earthSphere = new THREE.Mesh(sphereGeo, sphereMat);
-    globeGroup.add(earthSphere);
+    earthGroup.add(earthSphere);
 
-    // B. Holographic Latitude & Longitude Wireframe
+    // B. Holographic Latitude & Longitude Coordinate Lines
     const gridMat = new THREE.LineBasicMaterial({
       color: 0x244a7f,
       transparent: true,
       opacity: 0.32
     });
 
-    // Latitude rings
     const latAngles = [-60, -30, 0, 30, 60];
     latAngles.forEach((deg) => {
       const rad = THREE.MathUtils.degToRad(deg);
@@ -141,10 +131,9 @@ export default function Skills() {
       }
       ringGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
       const latLine = new THREE.Line(ringGeo, gridMat);
-      globeGroup.add(latLine);
+      earthGroup.add(latLine);
     });
 
-    // Longitude meridians (6 meridians)
     for (let m = 0; m < 6; m++) {
       const meridianAngle = (m / 6) * Math.PI;
       const merGeo = new THREE.BufferGeometry();
@@ -160,11 +149,11 @@ export default function Skills() {
       }
       merGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
       const meridianLine = new THREE.Line(merGeo, gridMat);
-      globeGroup.add(meridianLine);
+      earthGroup.add(meridianLine);
     }
 
-    // C. Surface Matrix Tech Particles (Continents / Grid dots)
-    const dotCount = prefersReducedMotion ? 400 : 900;
+    // C. Surface Matrix Tech Particles (Continents & Nodes)
+    const dotCount = prefersReducedMotion ? 350 : 850;
     const dotGeo = new THREE.BufferGeometry();
     const dotPositions = new Float32Array(dotCount * 3);
     const dotColors = new Float32Array(dotCount * 3);
@@ -180,15 +169,11 @@ export default function Skills() {
       const phi = Math.acos(2.0 * v - 1.0);
       const r = globeRadius * 1.002;
 
-      const x = r * Math.sin(phi) * Math.cos(theta);
-      const y = r * Math.sin(phi) * Math.sin(theta);
-      const z = r * Math.cos(phi);
+      dotPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      dotPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      dotPositions[i * 3 + 2] = r * Math.cos(phi);
 
-      dotPositions[i * 3] = x;
-      dotPositions[i * 3 + 1] = y;
-      dotPositions[i * 3 + 2] = z;
-
-      const pickColor = Math.random() > 0.4 ? (Math.random() > 0.5 ? c1 : c2) : c3;
+      const pickColor = Math.random() > 0.35 ? (Math.random() > 0.5 ? c1 : c2) : c3;
       dotColors[i * 3] = pickColor.r;
       dotColors[i * 3 + 1] = pickColor.g;
       dotColors[i * 3 + 2] = pickColor.b;
@@ -201,46 +186,65 @@ export default function Skills() {
       size: 2.2,
       vertexColors: true,
       transparent: true,
-      opacity: 0.65
+      opacity: 0.72
     });
     const surfaceDots = new THREE.Points(dotGeo, dotMat);
-    globeGroup.add(surfaceDots);
+    earthGroup.add(surfaceDots);
 
-    // D. Atmospheric Rim Shell (Glow Halo)
+    // D. Dynamic Atmosphere Rim Shell (Glow intensity increases near pointer)
     const atmoGeo = new THREE.SphereGeometry(globeRadius * 1.04, 32, 32);
     const atmoMat = new THREE.MeshBasicMaterial({
       color: 0x3b86ff,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.16,
       blending: THREE.AdditiveBlending
     });
     const atmoMesh = new THREE.Mesh(atmoGeo, atmoMat);
-    globeGroup.add(atmoMesh);
+    earthGroup.add(atmoMesh);
 
-    // Outer glow ring around globe
-    const outerGlowGeo = new THREE.RingGeometry(globeRadius * 1.01, globeRadius * 1.28, 64);
-    const outerGlowMat = new THREE.MeshBasicMaterial({
+    // Outer atmosphere glow ring
+    const glowRingGeo = new THREE.RingGeometry(globeRadius * 1.01, globeRadius * 1.25, 64);
+    const glowRingMat = new THREE.MeshBasicMaterial({
       color: 0x8fcaff,
       transparent: true,
       opacity: 0.18,
       side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending
     });
-    const outerGlowRing = new THREE.Mesh(outerGlowGeo, outerGlowMat);
-    globeGroup.add(outerGlowRing);
+    const glowRing = new THREE.Mesh(glowRingGeo, glowRingMat);
+    earthGroup.add(glowRing);
 
-    // E. 2 Tilted Orbital Paths with Traveling Data Beacons
-    const orbitalGroup = new THREE.Group();
-    scene.add(orbitalGroup);
+    // E. Background Parallax Particle Field (Depth Stars)
+    const starCount = prefersReducedMotion ? 40 : 120;
+    const starGeo = new THREE.BufferGeometry();
+    const starPositions = new Float32Array(starCount * 3);
 
-    const makeOrbit = (radiusX, radiusY, tiltX, tiltZ) => {
-      const curvePts = [];
-      const count = 72;
-      for (let i = 0; i <= count; i++) {
-        const a = (i / count) * Math.PI * 2;
-        curvePts.push(new THREE.Vector3(radiusX * Math.cos(a), 0, radiusY * Math.sin(a)));
+    for (let i = 0; i < starCount; i++) {
+      starPositions[i * 3] = (Math.random() - 0.5) * 550;
+      starPositions[i * 3 + 1] = (Math.random() - 0.5) * 550;
+      starPositions[i * 3 + 2] = (Math.random() - 0.5) * 300 - 100;
+    }
+
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starMat = new THREE.PointsMaterial({
+      size: 1.8,
+      color: 0x8fcaff,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending
+    });
+    const bgStars = new THREE.Points(starGeo, starMat);
+    scene.add(bgStars);
+
+    // F. Two Orbital Ellipses with Traveling Satellites
+    const makeOrbitRing = (rx, ry, tiltX, tiltZ) => {
+      const pts = [];
+      const segs = 64;
+      for (let i = 0; i <= segs; i++) {
+        const a = (i / segs) * Math.PI * 2;
+        pts.push(new THREE.Vector3(rx * Math.cos(a), 0, ry * Math.sin(a)));
       }
-      const geo = new THREE.BufferGeometry().setFromPoints(curvePts);
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
       const mat = new THREE.LineDashedMaterial({
         color: 0x8fcaff,
         dashSize: 4,
@@ -248,62 +252,36 @@ export default function Skills() {
         transparent: true,
         opacity: 0.35
       });
-      const line = new THREE.Line(geo, mat);
-      line.computeLineDistances();
-      line.rotation.x = tiltX;
-      line.rotation.z = tiltZ;
-      return line;
+      const ringLine = new THREE.Line(geo, mat);
+      ringLine.computeLineDistances();
+      ringLine.rotation.x = tiltX;
+      ringLine.rotation.z = tiltZ;
+      return ringLine;
     };
 
-    const orbit1 = makeOrbit(globeRadius * 1.25, globeRadius * 1.15, 0.45, -0.2);
-    const orbit2 = makeOrbit(globeRadius * 1.35, globeRadius * 1.22, -0.65, 0.4);
-    orbitalGroup.add(orbit1);
-    orbitalGroup.add(orbit2);
+    const orbit1 = makeOrbitRing(globeRadius * 1.28, globeRadius * 1.18, 0.45, -0.25);
+    const orbit2 = makeOrbitRing(globeRadius * 1.36, globeRadius * 1.22, -0.65, 0.35);
+    scene.add(orbit1);
+    scene.add(orbit2);
 
-    // Traveling satellites on orbital rings
-    const satGeo = new THREE.SphereGeometry(2.5, 8, 8);
+    // Orbital traveling satellites
+    const satGeo = new THREE.SphereGeometry(2.4, 8, 8);
     const satMat = new THREE.MeshBasicMaterial({ color: 0x8fcaff });
     const sat1 = new THREE.Mesh(satGeo, satMat);
     const sat2 = new THREE.Mesh(satGeo, satMat);
     scene.add(sat1);
     scene.add(sat2);
 
-    // F. Skill Surface Markers & Radial Stems on Globe
-    const nodeGeo = new THREE.SphereGeometry(2.4, 8, 8);
-    const nodeMat = new THREE.MeshBasicMaterial({ color: 0x8fcaff });
-    const nodeMeshes = [];
-
-    skillPoints.forEach((sp) => {
-      const surfacePos = sp.dir.clone().multiplyScalar(globeRadius);
-      const marker = new THREE.Mesh(nodeGeo, nodeMat);
-      marker.position.copy(surfacePos);
-      globeGroup.add(marker);
-      nodeMeshes.push(marker);
-
-      // Fine radial stem connecting globe surface to skill label
-      const stemGeo = new THREE.BufferGeometry().setFromPoints([
-        surfacePos,
-        sp.dir.clone().multiplyScalar(labelRadius * 0.95)
-      ]);
-      const stemMat = new THREE.LineBasicMaterial({
-        color: 0x3b86ff,
-        transparent: true,
-        opacity: 0.22
-      });
-      const stem = new THREE.Line(stemGeo, stemMat);
-      globeGroup.add(stem);
-    });
-
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
     scene.add(ambientLight);
 
     const dirLight = new THREE.DirectionalLight(0x8fcaff, 1.8);
-    dirLight.position.set(200, 150, 300);
+    dirLight.position.set(180, 160, 260);
     scene.add(dirLight);
 
-    const backLight = new THREE.DirectionalLight(0x1a3668, 1.0);
-    backLight.position.set(-200, -100, -250);
+    const backLight = new THREE.DirectionalLight(0x19366a, 1.0);
+    backLight.position.set(-180, -100, -220);
     scene.add(backLight);
 
     // 4. Performance & Visibility Guard
@@ -316,151 +294,150 @@ export default function Skills() {
           isVisible = e.isIntersecting;
         });
       },
-      { threshold: 0.05 }
+      { threshold: 0.1 }
     );
     observer.observe(container);
 
-    const handleVisibility = () => {
+    const handleVisibilityChange = () => {
       isTabActive = !document.hidden;
     };
-    document.addEventListener('visibilitychange', handleVisibility);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // 5. Mouse & Touch Drag Interactions
-    const onPointerDown = (e) => {
-      // Don't drag if user clicked directly on an interactive button
-      if (e.target.closest('button')) return;
-      isDraggingRef.current = true;
-      resetTargetRef.current = null;
+    // 5. Mouse Parallax & Proximity Hover Listeners
+    const onMouseMove = (e) => {
+      const rect = container.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
 
-      const clientX = e.clientX ?? (e.touches && e.touches[0].clientX);
-      const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
-      lastMousePosRef.current = { x: clientX, y: clientY };
+      // Clamp target parallax angles
+      mouseStateRef.current.targetX = Math.max(-1, Math.min(1, x));
+      mouseStateRef.current.targetY = Math.max(-1, Math.min(1, y));
+
+      // Increase atmospheric glow when mouse is over or near Earth
+      const distFromCenter = Math.sqrt(x * x + y * y);
+      if (distFromCenter < 1.3) {
+        mouseStateRef.current.targetGlow = 0.32;
+      } else {
+        mouseStateRef.current.targetGlow = 0.18;
+      }
+
+      if (mouseStateRef.current.dragActive) {
+        const dx = e.clientX - mouseStateRef.current.dragStartX;
+        const dy = e.clientY - mouseStateRef.current.dragStartY;
+        mouseStateRef.current.manualRotY += dx * 0.005;
+        mouseStateRef.current.manualRotX += dy * 0.005;
+        mouseStateRef.current.manualRotX = Math.max(-0.8, Math.min(0.8, mouseStateRef.current.manualRotX));
+        mouseStateRef.current.dragStartX = e.clientX;
+        mouseStateRef.current.dragStartY = e.clientY;
+      }
     };
 
-    const onPointerMove = (e) => {
-      if (!isDraggingRef.current) return;
-      const clientX = e.clientX ?? (e.touches && e.touches[0].clientX);
-      const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
-
-      const dx = clientX - lastMousePosRef.current.x;
-      const dy = clientY - lastMousePosRef.current.y;
-
-      velocityRef.current.y = dx * 0.0035;
-      velocityRef.current.x = dy * 0.0035;
-
-      rotationRef.current.y += velocityRef.current.y;
-      rotationRef.current.x += velocityRef.current.x;
-
-      // Clamp vertical tilt between -70deg and +70deg
-      rotationRef.current.x = Math.max(-1.2, Math.min(1.2, rotationRef.current.x));
-
-      lastMousePosRef.current = { x: clientX, y: clientY };
+    const onMouseEnter = () => {
+      mouseStateRef.current.isHovered = true;
+      mouseStateRef.current.targetGlow = 0.3;
     };
 
-    const onPointerUp = () => {
-      isDraggingRef.current = false;
+    const onMouseLeave = () => {
+      mouseStateRef.current.isHovered = false;
+      mouseStateRef.current.targetX = 0;
+      mouseStateRef.current.targetY = 0;
+      mouseStateRef.current.targetGlow = 0.18;
+      mouseStateRef.current.dragActive = false;
     };
 
-    container.addEventListener('mousedown', onPointerDown);
-    window.addEventListener('mousemove', onPointerMove);
-    window.addEventListener('mouseup', onPointerUp);
+    const onMouseDown = (e) => {
+      mouseStateRef.current.dragActive = true;
+      mouseStateRef.current.dragStartX = e.clientX;
+      mouseStateRef.current.dragStartY = e.clientY;
+    };
 
-    container.addEventListener('touchstart', onPointerDown, { passive: true });
-    window.addEventListener('touchmove', onPointerMove, { passive: true });
-    window.addEventListener('touchend', onPointerUp);
+    const onMouseUp = () => {
+      mouseStateRef.current.dragActive = false;
+    };
 
-    // Resize handling
+    // Touch support for mobile devices
+    const onTouchMove = (e) => {
+      if (e.touches && e.touches[0]) {
+        const rect = container.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = -(((touch.clientY - rect.top) / rect.height) * 2 - 1);
+        mouseStateRef.current.targetX = Math.max(-0.8, Math.min(0.8, x));
+        mouseStateRef.current.targetY = Math.max(-0.8, Math.min(0.8, y));
+      }
+    };
+
+    container.addEventListener('mousemove', onMouseMove, { passive: true });
+    container.addEventListener('mouseenter', onMouseEnter);
+    container.addEventListener('mouseleave', onMouseLeave);
+    container.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mouseup', onMouseUp);
+
+    container.addEventListener('touchmove', onTouchMove, { passive: true });
+    container.addEventListener('touchend', onMouseLeave);
+
     const handleResize = () => {
       if (!container || !renderer) return;
-      width = container.clientWidth || 780;
-      height = container.clientHeight || 560;
+      width = container.clientWidth || 460;
+      height = container.clientHeight || 460;
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
     };
     window.addEventListener('resize', handleResize);
 
-    // 6. Animation & Projection Render Loop
+    // 6. Smooth Animation & Parallax Render Loop
     let animId;
-    let orbitClock = 0;
-    const tempVec = new THREE.Vector3();
+    let autoTime = 0;
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
 
       if (!isVisible || !isTabActive) return;
 
-      orbitClock += 0.015;
+      autoTime += 0.0028;
 
-      // Smooth reset transition
-      if (resetTargetRef.current) {
-        rotationRef.current.x += (resetTargetRef.current.x - rotationRef.current.x) * 0.08;
-        rotationRef.current.y += (resetTargetRef.current.y - rotationRef.current.y) * 0.08;
-        if (
-          Math.abs(resetTargetRef.current.x - rotationRef.current.x) < 0.005 &&
-          Math.abs(resetTargetRef.current.y - rotationRef.current.y) < 0.005
-        ) {
-          resetTargetRef.current = null;
-        }
-      } else if (!isDraggingRef.current) {
-        // Natural continuous auto-rotation
-        if (!prefersReducedMotion) {
-          velocityRef.current.y = 0.0016;
-        }
-        rotationRef.current.y += velocityRef.current.y;
-        rotationRef.current.x += velocityRef.current.x * 0.92;
-        rotationRef.current.x = Math.max(-1.2, Math.min(1.2, rotationRef.current.x));
+      const ms = mouseStateRef.current;
+
+      // Smooth interpolation for mouse parallax (no jitter)
+      ms.currentX += (ms.targetX - ms.currentX) * 0.055;
+      ms.currentY += (ms.targetY - ms.currentY) * 0.055;
+
+      // Smooth atmospheric glow transition
+      ms.glowIntensity += (ms.targetGlow - ms.glowIntensity) * 0.075;
+      atmoMat.opacity = ms.glowIntensity;
+      glowRingMat.opacity = ms.glowIntensity * 1.1;
+
+      // Combine continuous automatic rotation with gentle mouse parallax tilt
+      const parallaxTiltX = ms.currentY * 0.35 + ms.manualRotX;
+      const parallaxTiltY = autoTime + ms.currentX * 0.45 + ms.manualRotY;
+
+      if (!prefersReducedMotion) {
+        earthGroup.rotation.x = parallaxTiltX;
+        earthGroup.rotation.y = parallaxTiltY;
+
+        // Subtle background star parallax (depth effect)
+        bgStars.position.x = -ms.currentX * 18;
+        bgStars.position.y = -ms.currentY * 14;
+
+        // Traveling satellites on orbits
+        const s1Angle = autoTime * 1.6;
+        const r1 = globeRadius * 1.28;
+        sat1.position.set(r1 * Math.cos(s1Angle), 0, r1 * Math.sin(s1Angle));
+        sat1.position.applyEuler(new THREE.Euler(0.45, 0, -0.25));
+
+        const s2Angle = -autoTime * 2.1;
+        const r2 = globeRadius * 1.36;
+        sat2.position.set(r2 * Math.cos(s2Angle), 0, r2 * Math.sin(s2Angle));
+        sat2.position.applyEuler(new THREE.Euler(-0.65, 0, 0.35));
+      } else {
+        earthGroup.rotation.y = 0.2;
       }
 
-      // Apply rotation to globe
-      globeGroup.rotation.x = rotationRef.current.x;
-      globeGroup.rotation.y = rotationRef.current.y;
-
-      // Animate orbital satellites
-      const o1Angle = orbitClock * 0.6;
-      const r1 = globeRadius * 1.25;
-      sat1.position.set(r1 * Math.cos(o1Angle), 0, r1 * Math.sin(o1Angle));
-      sat1.position.applyEuler(new THREE.Euler(0.45, 0, -0.2));
-
-      const o2Angle = -orbitClock * 0.8;
-      const r2 = globeRadius * 1.35;
-      sat2.position.set(r2 * Math.cos(o2Angle), 0, r2 * Math.sin(o2Angle));
-      sat2.position.applyEuler(new THREE.Euler(-0.65, 0, 0.4));
-
-      // Make outer glow ring billow toward camera
-      outerGlowRing.lookAt(camera.position);
+      // Outer glow ring continuously billows toward camera
+      glowRing.lookAt(camera.position);
 
       renderer.render(scene, camera);
-
-      // Project 32 skill labels from 3D coordinates onto HTML canvas overlay
-      const labelEls = labelElementsRef.current;
-      const wHalf = width / 2;
-      const hHalf = height / 2;
-
-      skillPoints.forEach((sp, idx) => {
-        const el = labelEls[idx];
-        if (!el) return;
-
-        // Position on label radius
-        tempVec.copy(sp.dir).multiplyScalar(labelRadius);
-        tempVec.applyEuler(globeGroup.rotation);
-
-        // Check if facing the front (z > 0 means towards camera in perspective projection)
-        const isFront = tempVec.z > -globeRadius * 0.25;
-        const normalizedDepth = (tempVec.z + globeRadius) / (2 * globeRadius);
-
-        // Project to 2D screen coordinates
-        tempVec.project(camera);
-        const screenX = tempVec.x * wHalf + wHalf;
-        const screenY = -(tempVec.y * hHalf) + hHalf;
-
-        // Apply 3D translate and dynamic depth styling
-        el.style.transform = `translate3d(${Math.round(screenX)}px, ${Math.round(screenY)}px, 0) translate(-50%, -50%)`;
-
-        // Manage depth z-index
-        el.style.zIndex = Math.round(normalizedDepth * 100) + 10;
-        el.dataset.front = isFront ? 'true' : 'false';
-      });
     };
 
     animate();
@@ -468,17 +445,17 @@ export default function Skills() {
     // 7. Cleanup & Disposals
     return () => {
       observer.disconnect();
-      document.removeEventListener('visibilitychange', handleVisibility);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', handleResize);
-      container.removeEventListener('mousedown', onPointerDown);
-      window.removeEventListener('mousemove', onPointerMove);
-      window.removeEventListener('mouseup', onPointerUp);
-      container.removeEventListener('touchstart', onPointerDown);
-      window.removeEventListener('touchmove', onPointerMove);
-      window.removeEventListener('touchend', onPointerUp);
+      container.removeEventListener('mousemove', onMouseMove);
+      container.removeEventListener('mouseenter', onMouseEnter);
+      container.removeEventListener('mouseleave', onMouseLeave);
+      container.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mouseup', onMouseUp);
+      container.removeEventListener('touchmove', onTouchMove);
+      container.removeEventListener('touchend', onMouseLeave);
       cancelAnimationFrame(animId);
 
-      // Dispose geometries & materials
       sphereGeo.dispose();
       sphereMat.dispose();
       gridMat.dispose();
@@ -486,162 +463,164 @@ export default function Skills() {
       dotMat.dispose();
       atmoGeo.dispose();
       atmoMat.dispose();
-      outerGlowGeo.dispose();
-      outerGlowMat.dispose();
+      glowRingGeo.dispose();
+      glowRingMat.dispose();
+      starGeo.dispose();
+      starMat.dispose();
       satGeo.dispose();
       satMat.dispose();
-      nodeGeo.dispose();
-      nodeMat.dispose();
       renderer?.dispose();
     };
-  }, [skillPoints]);
+  }, [webglSupported]);
 
   return (
     <section id="skills" className="section skills-section">
       <div className="container">
         
         {/* Section Header */}
-        <div className="section-header text-center" style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 2.5rem' }}>
-          <div className="section-tag" style={{ justifyContent: 'center' }}>
+        <div className="section-header">
+          <div className="section-tag">
             <span>02 // TECHNICAL ARSENAL</span>
           </div>
           <h2 className="section-title">
             Skills &amp; <span className="font-serif-italic">Competencies</span>
           </h2>
-          <p className="section-subtitle" style={{ margin: '0 auto' }}>
+          <p className="section-subtitle">
             Technologies and tools I use to build web applications, backend systems, and intelligent solutions.
           </p>
         </div>
 
-        {/* Minimal Category Filter Pills */}
-        <div className="globe-filters-bar" role="tablist" aria-label="Technology Skill Categories">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              role="tab"
-              aria-selected={activeCategory === cat.id}
-              className={`globe-filter-pill ${activeCategory === cat.id ? 'active' : ''}`}
-              onClick={() => {
-                setActiveCategory(cat.id);
-                setSelectedSkill(null);
-              }}
-            >
-              <span>{cat.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Centered 3D Interactive Earth Technology Globe */}
-        <div className="earth-globe-wrapper">
+        {/* 2-Column Responsive Layout: Medium Earth Left, Clean Skills Panel Right */}
+        <div className="skills-split-layout">
           
-          <div
-            ref={containerRef}
-            className="earth-globe-viewport"
-            role="region"
-            aria-label="Interactive 3D Technology Earth Globe"
-          >
-            {/* Three.js WebGL Canvas */}
-            <canvas ref={canvasRef} className="earth-webgl-canvas" />
+          {/* Left Column: Medium Interactive 3D Earth */}
+          <div className="earth-column">
+            <div
+              ref={containerRef}
+              className="medium-earth-viewport"
+              role="region"
+              aria-label="Interactive 3D Technology Earth with Mouse Parallax"
+            >
+              <canvas ref={canvasRef} className="earth-canvas" />
 
-            {/* Projected Skill Labels Layer */}
-            <div ref={labelsContainerRef} className="earth-labels-layer" aria-hidden="false">
-              {skillPoints.map((skill, idx) => {
-                const matchesCategory = activeCategory === 'all' || skill.category === activeCategory;
-                const isSelected = selectedSkill?.name === skill.name;
-                const isHovered = hoveredSkill?.name === skill.name;
-
-                return (
-                  <button
-                    key={skill.name}
-                    ref={(el) => (labelElementsRef.current[idx] = el)}
-                    type="button"
-                    className={`earth-skill-chip ${matchesCategory ? 'in-category' : 'out-category'} ${
-                      isSelected ? 'chip-selected' : ''
-                    } ${isHovered ? 'chip-hovered' : ''}`}
-                    onClick={() => setSelectedSkill(skill)}
-                    onMouseEnter={() => setHoveredSkill(skill)}
-                    onMouseLeave={() => setHoveredSkill(null)}
-                    aria-label={`Inspect ${skill.name} (${skill.type})`}
-                  >
-                    <span className="chip-dot" aria-hidden="true" />
-                    <span className="chip-text">{skill.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Subtle Controls Overlay */}
-            <div className="globe-controls-overlay">
-              <span className="globe-hint-pill">
-                <Sparkles size={12} aria-hidden="true" />
-                <span>Drag to rotate • Click skill to inspect</span>
-              </span>
-
-              <button
-                type="button"
-                onClick={handleResetRotation}
-                className="globe-reset-btn"
-                title="Reset Earth Globe Orientation"
-                aria-label="Reset Earth Globe Rotation"
-              >
-                <RotateCcw size={13} aria-hidden="true" />
-                <span>Reset View</span>
-              </button>
-            </div>
-
-          </div>
-
-          {/* Floating Selected Skill Information HUD Badge */}
-          <div className="globe-hud-panel" aria-live="polite">
-            {selectedSkill ? (
-              <div className="hud-card hud-active">
-                <div className="hud-header">
-                  <div className="hud-badge">
-                    <CheckCircle2 size={13} aria-hidden="true" />
-                    <span>{selectedSkill.type}</span>
-                  </div>
-                  <h3 className="hud-title">{selectedSkill.name}</h3>
-                </div>
-                <p className="hud-desc">{selectedSkill.desc}</p>
+              {/* Status / Interaction Overlays */}
+              <div className="earth-overlay-top">
+                <span className="earth-badge">
+                  <Sparkles size={12} aria-hidden="true" />
+                  <span>Interactive 3D Earth</span>
+                </span>
+                
                 <button
                   type="button"
-                  onClick={() => setSelectedSkill(null)}
-                  className="hud-dismiss-btn"
+                  onClick={handleResetEarth}
+                  className="earth-reset-btn"
+                  title="Reset Earth View"
+                  aria-label="Reset 3D Earth Rotation and Tilt"
                 >
-                  Dismiss
+                  <RotateCcw size={12} aria-hidden="true" />
+                  <span>Reset View</span>
                 </button>
               </div>
-            ) : (
-              <div className="hud-card hud-idle">
-                <div className="hud-idle-content">
-                  <Info size={16} className="hud-info-icon" aria-hidden="true" />
-                  <span>
-                    Explore <strong>32 technical competencies</strong> across Full-Stack, Machine Learning, Databases &amp; DevOps.
-                  </span>
-                </div>
+
+              <div className="earth-overlay-bottom">
+                <span className="earth-caption">
+                  Move mouse over globe for parallax tilt &amp; atmospheric glow
+                </span>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Accessible Semantic Fallback for Non-WebGL or Screen Readers */}
-          {!webglSupported && (
-            <div className="webgl-fallback-matrix" role="region" aria-label="Accessible Skills Matrix">
-              <h3 className="sr-only">Technical Skills by Category</h3>
-              {categories.filter(c => c.id !== 'all').map((cat) => (
-                <div key={cat.id} className="fallback-category-group">
-                  <h4 className="fallback-group-title">{cat.label}</h4>
-                  <ul className="fallback-skill-list">
-                    {skills.filter(s => s.category === cat.id).map(s => (
-                      <li key={s.name} className="fallback-skill-item">
-                        <strong>{s.name}</strong> — {s.desc}
-                      </li>
-                    ))}
-                  </ul>
+          {/* Right Column: Clean Organized Skills Panel */}
+          <div className="skills-panel-column">
+            <div className="skills-glass-panel">
+              
+              {/* Category Filter Tabs */}
+              <div className="panel-tabs-bar" role="tablist" aria-label="Skill Categories">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeCategory === cat.id}
+                    className={`panel-tab-btn ${activeCategory === cat.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveCategory(cat.id);
+                      setSelectedSkill(null);
+                    }}
+                  >
+                    <span>{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Subheader: Category Count & Title */}
+              <div className="panel-content-header">
+                <div className="panel-category-info">
+                  <Layers size={15} className="panel-cat-icon" aria-hidden="true" />
+                  <span className="panel-cat-name">
+                    {categories.find((c) => c.id === activeCategory)?.label || 'All Skills'}
+                  </span>
                 </div>
-              ))}
+                <span className="panel-count-pill">
+                  {displayedSkills.length} Competencies
+                </span>
+              </div>
+
+              {/* Organized Skill Cards Grid */}
+              <div
+                className="skills-cards-grid"
+                role="region"
+                aria-label="Technical skills in selected category"
+              >
+                {displayedSkills.map((skill) => {
+                  const isSelected = selectedSkill?.name === skill.name;
+
+                  return (
+                    <div
+                      key={skill.name}
+                      tabIndex={0}
+                      role="button"
+                      aria-pressed={isSelected}
+                      className={`skill-item-card ${isSelected ? 'selected' : ''}`}
+                      onClick={() => setSelectedSkill(isSelected ? null : skill)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedSkill(isSelected ? null : skill);
+                        }
+                      }}
+                    >
+                      <div className="card-top-row">
+                        <span className="skill-item-name">{skill.name}</span>
+                        <span className="skill-type-pill">{skill.type}</span>
+                      </div>
+                      <p className="skill-item-desc">{skill.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Bottom Inspection Bar */}
+              {selectedSkill && (
+                <div className="panel-selected-bar" role="status" aria-live="polite">
+                  <div className="selected-meta">
+                    <Cpu size={14} className="selected-icon" aria-hidden="true" />
+                    <span>
+                      Selected: <strong style={{ color: '#ffffff' }}>{selectedSkill.name}</strong> ({selectedSkill.type})
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSkill(null)}
+                    className="selected-close-btn"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+
             </div>
-          )}
+          </div>
 
         </div>
 
