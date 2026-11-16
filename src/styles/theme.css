@@ -1,0 +1,230 @@
+:root {
+  /* ==========================================================================
+     VOID & SURFACE PALETTE (Elegant Dark Cosmic Aesthetic)
+     ========================================================================== */
+  --void: #05070f;
+  --deep: #080d1c;
+  --deep-alt: #0b1329;
+  --surface: rgba(11, 19, 41, 0.7);
+  --surface-hover: rgba(18, 30, 64, 0.9);
+  --surface-card: rgba(13, 22, 48, 0.5);
+
+  /* Ink Typography Spectrum */
+  --ink-00: #ffffff;
+  --ink-10: #eef1f6;
+  --ink-40: #a7afbd;
+  --ink-60: #848e9f;
+  --ink-80: #4a5464;
+
+  --fg: var(--ink-10);
+  --fg-soft: var(--ink-40);
+  --fg-faint: var(--ink-60);
+
+  /* Sky Blue & Cyan Accents */
+  --accent: #8fcaff;
+  --accent-deep: #3b86ff;
+  --accent-glow: rgba(143, 202, 255, 0.2);
+  --accent-subtle: rgba(143, 202, 255, 0.08);
+
+  /* Borders & Dividers */
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --line-accent: rgba(143, 202, 255, 0.35);
+
+  /* Typography System */
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-body: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+
+  /* Fluid Modular Scale */
+  --t-hero: clamp(2.8rem, 7.5vw, 6.2rem);
+  --t-h2: clamp(2.2rem, 5vw, 4rem);
+  --t-h3: clamp(1.2rem, 2vw, 1.65rem);
+  --t-body: clamp(0.95rem, 1.05vw, 1.05rem);
+  --t-small: 0.85rem;
+  --t-label: 0.7rem;
+  --t-micro: 0.6rem;
+
+  --track-label: 0.2em;
+  --track-mono: 0.1em;
+
+  /* Geometry & Radii */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-full: 9999px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base Reset & Document Setup */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--fg);
+  background-color: var(--void);
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100vh;
+  position: relative;
+  background-color: var(--void);
+  overflow-x: hidden;
+  line-height: 1.65;
+}
+
+/* Custom Selection */
+::selection {
+  background: rgba(143, 202, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--void);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Accessibility Focus States */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s var(--ease-standard);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Containers */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 0 2.5rem;
+  }
+}
+
+/* Section Shell & Heading Protection */
+.section {
+  position: relative;
+  padding: 6.5rem 0;
+  scroll-margin-top: 5.5rem;
+  z-index: 2;
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding: 8.5rem 0;
+    scroll-margin-top: 6rem;
+  }
+}
+
+/* Section Header Motif */
+.section-header {
+  margin-bottom: 3.5rem;
+}
+
+.section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.8rem;
+}
+
+.section-tag::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: var(--t-h2);
+  font-weight: 400;
+  line-height: 1.12;
+  color: var(--ink-00);
+  letter-spacing: -0.015em;
+}
+
+.section-subtitle {
+  margin-top: 0.9rem;
+  font-size: var(--t-body);
+  color: var(--fg-soft);
+  max-width: 680px;
+  line-height: 1.6;
+}
+
+/* Editorial Serif Accent (Italic highlights) */
+.font-serif-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--ink-00);
+}
+
+/* Monospace Utilities */
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+/* Vignette Overlay */
+.vignette-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(circle at 50% 50%, transparent 65%, rgba(5, 7, 15, 0.75) 100%);
+}
