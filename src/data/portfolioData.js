@@ -27,51 +27,58 @@ export const PORTFOLIO_DATA = {
   skills: {
     categories: [
       { id: "all", label: "All Skills" },
-      { id: "languages-frameworks", label: "Languages & Frameworks" },
+      { id: "programming", label: "Programming" },
+      { id: "frontend-backend", label: "Frontend & Backend" },
+      { id: "ml-ai", label: "Machine Learning & AI" },
       { id: "databases", label: "Databases" },
-      { id: "devops-tools", label: "DevOps & Tools" },
-      { id: "cloud", label: "Cloud Platforms" }
+      { id: "devops-tools", label: "DevOps & Tools" }
     ],
     items: [
-      // Languages & Frameworks (strictly from CV)
-      { name: "Python", category: "languages-frameworks" },
-      { name: "JavaScript (ES6+)", category: "languages-frameworks" },
-      { name: "C++", category: "languages-frameworks" },
-      { name: "PHP", category: "languages-frameworks" },
-      { name: "HTML5", category: "languages-frameworks" },
-      { name: "CSS3", category: "languages-frameworks" },
-      { name: "Django", category: "languages-frameworks" },
-      { name: "Flask", category: "languages-frameworks" },
-      { name: "FastAPI", category: "languages-frameworks" },
-      { name: "React.js", category: "languages-frameworks" },
-      { name: "Bootstrap", category: "languages-frameworks" },
-      { name: "Tailwind CSS", category: "languages-frameworks" },
-      { name: "SQLAlchemy", category: "languages-frameworks" },
-      { name: "Pandas", category: "languages-frameworks" },
-      { name: "Scikit-learn", category: "languages-frameworks" },
-      { name: "Machine Learning", category: "languages-frameworks" },
-      { name: "Generative AI", category: "languages-frameworks" },
+      // Programming (4)
+      { name: "Python", category: "programming", type: "Programming", desc: "Core language for backend architectures, data pipelines & machine learning" },
+      { name: "JavaScript (ES6+)", category: "programming", type: "Programming", desc: "Modern ECMAScript for interactive frontends & responsive client workflows" },
+      { name: "C++", category: "programming", type: "Programming", desc: "Object-oriented programming, data structures & systems foundational algorithms" },
+      { name: "PHP", category: "programming", type: "Programming", desc: "Server-side scripting & web development integration" },
 
-      // Databases
-      { name: "PostgreSQL", category: "databases" },
-      { name: "MySQL", category: "databases" },
-      { name: "SQLite", category: "databases" },
-      { name: "SQL", category: "databases" },
+      // Frontend (5) -> Category: 'frontend-backend'
+      { name: "React.js", category: "frontend-backend", type: "Frontend", desc: "Component architecture, reactive hooks & modern SPA engineering" },
+      { name: "HTML5", category: "frontend-backend", type: "Frontend", desc: "Semantic markup, accessibility landmarks & document structure" },
+      { name: "CSS3", category: "frontend-backend", type: "Frontend", desc: "Flexbox, CSS Grid, custom properties & responsive design systems" },
+      { name: "Bootstrap", category: "frontend-backend", type: "Frontend", desc: "Rapid utility styling, grid systems & responsive UI layout components" },
+      { name: "Tailwind CSS", category: "frontend-backend", type: "Frontend", desc: "Utility-first modern styling for maintainable, fluid component UI" },
 
-      // DevOps & Tools
-      { name: "Docker", category: "devops-tools" },
-      { name: "GitHub Actions (CI/CD)", category: "devops-tools" },
-      { name: "Git & GitHub", category: "devops-tools" },
-      { name: "Pytest", category: "devops-tools" },
-      { name: "Playwright", category: "devops-tools" },
-      { name: "REST APIs", category: "devops-tools" },
-      { name: "Gunicorn", category: "devops-tools" },
-      { name: "Visual Studio Code", category: "devops-tools" },
+      // Backend (4) -> Category: 'frontend-backend'
+      { name: "Django", category: "frontend-backend", type: "Backend", desc: "High-level Python web framework with MVT architecture, ORM & security" },
+      { name: "Flask", category: "frontend-backend", type: "Backend", desc: "Lightweight WSGI web microframework for REST APIs & microservices" },
+      { name: "FastAPI", category: "frontend-backend", type: "Backend", desc: "Asynchronous, high-performance Python framework for modern REST APIs" },
+      { name: "REST APIs", category: "frontend-backend", type: "Backend", desc: "Stateless HTTP API architecture, JSON serialization & CRUD endpoints" },
 
-      // Cloud Platforms
-      { name: "Vercel", category: "cloud" },
-      { name: "Render", category: "cloud" },
-      { name: "Neon (serverless PostgreSQL)", category: "cloud" }
+      // Machine Learning & AI (4) -> Category: 'ml-ai'
+      { name: "Machine Learning", category: "ml-ai", type: "Machine Learning & AI", desc: "Supervised regression, classification & model evaluation workflows" },
+      { name: "Scikit-learn", category: "ml-ai", type: "Machine Learning & AI", desc: "Algorithm pipelines, cross-validation, feature tuning & metrics evaluation" },
+      { name: "Generative AI", category: "ml-ai", type: "Machine Learning & AI", desc: "LLM integrations, prompt engineering & AI assistant pipelines" },
+      { name: "Pandas", category: "ml-ai", type: "Machine Learning & AI", desc: "Data wrangling, tabular transformations & exploratory dataset analytics" },
+
+      // Databases (5) -> Category: 'databases'
+      { name: "PostgreSQL", category: "databases", type: "Databases", desc: "Enterprise relational database with structured schemas & ACID transactions" },
+      { name: "MySQL", category: "databases", type: "Databases", desc: "Relational database management for web applications & backend services" },
+      { name: "SQLite", category: "databases", type: "Databases", desc: "Serverless embedded database for local development & automated testing" },
+      { name: "SQLAlchemy", category: "databases", type: "Databases", desc: "SQL toolkit & Object-Relational Mapper (ORM) for Python applications" },
+      { name: "SQL", category: "databases", type: "Databases", desc: "Complex relational querying, aggregation, filtering & schema design" },
+
+      // DevOps & Cloud (5) -> Category: 'devops-tools'
+      { name: "Docker", category: "devops-tools", type: "DevOps & Cloud", desc: "Containerization, reproducible runtimes & multi-stage Dockerfiles" },
+      { name: "GitHub Actions", category: "devops-tools", type: "DevOps & Cloud", desc: "Continuous Integration & Continuous Delivery (CI/CD) pipelines" },
+      { name: "Vercel", category: "devops-tools", type: "DevOps & Cloud", desc: "Cloud serverless deployment, edge hosting & automated git preview builds" },
+      { name: "Render", category: "devops-tools", type: "DevOps & Cloud", desc: "Cloud application hosting with managed web services & worker instances" },
+      { name: "Neon", category: "devops-tools", type: "DevOps & Cloud", desc: "Serverless cloud PostgreSQL with branching & autoscaling storage" },
+
+      // Testing & Tools (5) -> Category: 'devops-tools'
+      { name: "Pytest", category: "devops-tools", type: "Testing & Tools", desc: "Test automation, fixtures, parametrized tests & regression suites" },
+      { name: "Playwright", category: "devops-tools", type: "Testing & Tools", desc: "End-to-end browser automation & cross-browser integration testing" },
+      { name: "Git", category: "devops-tools", type: "Testing & Tools", desc: "Distributed version control, branching workflows & commit tracking" },
+      { name: "GitHub", category: "devops-tools", type: "Testing & Tools", desc: "Source code collaboration, pull requests, issue tracking & releases" },
+      { name: "Visual Studio Code", category: "devops-tools", type: "Testing & Tools", desc: "Primary development IDE with extensions, linting & debugging" }
     ]
   },
 

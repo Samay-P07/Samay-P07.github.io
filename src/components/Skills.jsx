@@ -1,216 +1,647 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import * as THREE from 'three';
+import { RotateCcw, Info, Sparkles, CheckCircle2 } from 'lucide-react';
 import { PORTFOLIO_DATA } from '../data/portfolioData';
+
+// Pure synchronous WebGL availability check
+const checkWebGLSupport = () => {
+  if (typeof window === 'undefined') return true;
+  try {
+    const testCanvas = document.createElement('canvas');
+    return !!(
+      window.WebGLRenderingContext &&
+      (testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl'))
+    );
+  } catch {
+    return false;
+  }
+};
 
 export default function Skills() {
   const [activeCategory, setActiveCategory] = useState('all');
-  const canvasRef = useRef(null);
+  const [selectedSkill, setSelectedSkill] = useState(null);
+  const [hoveredSkill, setHoveredSkill] = useState(null);
+  const [webglSupported] = useState(checkWebGLSupport);
+
   const containerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const labelsContainerRef = useRef(null);
+  const labelElementsRef = useRef([]);
 
-  const filteredSkills = PORTFOLIO_DATA.skills.items.filter((item) => {
-    if (activeCategory === 'all') return true;
-    return item.category === activeCategory;
-  });
+  // Globe interaction state
+  const rotationRef = useRef({ x: 0.12, y: 0.35 });
+  const velocityRef = useRef({ x: 0, y: 0.0015 });
+  const isDraggingRef = useRef(false);
+  const lastMousePosRef = useRef({ x: 0, y: 0 });
+  const resetTargetRef = useRef(null);
 
-  // Interactive 3D Draggable Sphere on Canvas with Performance Guards
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  const categories = PORTFOLIO_DATA.skills.categories;
+  const skills = PORTFOLIO_DATA.skills.items;
 
-    let width = (canvas.width = canvas.parentElement.clientWidth || 360);
-    let height = (canvas.height = canvas.width);
-    let radius = width * 0.38;
+  // Calculate Fibonacci Golden Spiral 3D points on sphere for 32 skills
+  const skillPoints = useMemo(() => {
+    const count = skills.length;
+    const phi = Math.PI * (3 - Math.sqrt(5)); // Golden angle ~2.39996 rad
 
-    const skillList = PORTFOLIO_DATA.skills.items.map((s) => s.name);
-    const count = skillList.length;
+    return skills.map((skill, i) => {
+      const y = 1 - (i / (count - 1)) * 2; // from 1 down to -1
+      const radiusAtY = Math.sqrt(Math.max(0, 1 - y * y));
+      const theta = phi * i;
 
-    // Fibonacci sphere distribution
-    const tags = skillList.map((text, i) => {
-      const phi = Math.acos(-1 + (2 * i + 1) / count);
-      const theta = Math.sqrt(count * Math.PI) * phi;
+      const x = Math.cos(theta) * radiusAtY;
+      const z = Math.sin(theta) * radiusAtY;
+
       return {
-        text,
-        x: radius * Math.cos(theta) * Math.sin(phi),
-        y: radius * Math.sin(theta) * Math.sin(phi),
-        z: radius * Math.cos(phi)
+        ...skill,
+        index: i,
+        // Normalized direction vector from center
+        dir: new THREE.Vector3(x, y, z).normalize()
       };
     });
+  }, [skills]);
 
-    let angleX = 0.002;
-    let angleY = 0.002;
-    let isDragging = false;
-    let lastMouseX = 0;
-    let lastMouseY = 0;
-    let animId;
+  // Handle smooth reset view
+  const handleResetRotation = useCallback(() => {
+    resetTargetRef.current = { x: 0.1, y: 0.4 };
+    velocityRef.current = { x: 0, y: 0.0015 };
+  }, []);
+
+  // Three.js 3D Earth Globe Engine
+  useEffect(() => {
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let width = container.clientWidth || 780;
+    let height = container.clientHeight || 560;
+
+    // 1. Scene & Camera
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
+    camera.position.z = 420;
+
+    // 2. WebGL Renderer
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance'
+      });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    } catch {
+      return;
+    }
+
+    // 3. Globe Group
+    const globeGroup = new THREE.Group();
+    scene.add(globeGroup);
+
+    // Responsive globe radius
+    const globeRadius = Math.min(width, height) * 0.28;
+    const labelRadius = globeRadius * 1.34;
+
+    // A. Dark Cosmic Earth Sphere Core
+    const sphereGeo = new THREE.SphereGeometry(globeRadius, 36, 36);
+    const sphereMat = new THREE.MeshPhongMaterial({
+      color: 0x060c1d,
+      emissive: 0x040814,
+      specular: 0x3b86ff,
+      shininess: 18,
+      transparent: true,
+      opacity: 0.94
+    });
+    const earthSphere = new THREE.Mesh(sphereGeo, sphereMat);
+    globeGroup.add(earthSphere);
+
+    // B. Holographic Latitude & Longitude Wireframe
+    const gridMat = new THREE.LineBasicMaterial({
+      color: 0x244a7f,
+      transparent: true,
+      opacity: 0.32
+    });
+
+    // Latitude rings
+    const latAngles = [-60, -30, 0, 30, 60];
+    latAngles.forEach((deg) => {
+      const rad = THREE.MathUtils.degToRad(deg);
+      const r = globeRadius * Math.cos(rad);
+      const y = globeRadius * Math.sin(rad);
+
+      const ringGeo = new THREE.BufferGeometry();
+      const pts = [];
+      const segs = 64;
+      for (let j = 0; j <= segs; j++) {
+        const theta = (j / segs) * Math.PI * 2;
+        pts.push(r * Math.cos(theta), y, r * Math.sin(theta));
+      }
+      ringGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      const latLine = new THREE.Line(ringGeo, gridMat);
+      globeGroup.add(latLine);
+    });
+
+    // Longitude meridians (6 meridians)
+    for (let m = 0; m < 6; m++) {
+      const meridianAngle = (m / 6) * Math.PI;
+      const merGeo = new THREE.BufferGeometry();
+      const pts = [];
+      const segs = 64;
+      for (let j = 0; j <= segs; j++) {
+        const theta = (j / segs) * Math.PI * 2;
+        pts.push(
+          globeRadius * Math.cos(theta) * Math.cos(meridianAngle),
+          globeRadius * Math.sin(theta),
+          globeRadius * Math.cos(theta) * Math.sin(meridianAngle)
+        );
+      }
+      merGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      const meridianLine = new THREE.Line(merGeo, gridMat);
+      globeGroup.add(meridianLine);
+    }
+
+    // C. Surface Matrix Tech Particles (Continents / Grid dots)
+    const dotCount = prefersReducedMotion ? 400 : 900;
+    const dotGeo = new THREE.BufferGeometry();
+    const dotPositions = new Float32Array(dotCount * 3);
+    const dotColors = new Float32Array(dotCount * 3);
+
+    const c1 = new THREE.Color('#8fcaff');
+    const c2 = new THREE.Color('#3b86ff');
+    const c3 = new THREE.Color('#162d55');
+
+    for (let i = 0; i < dotCount; i++) {
+      const u = Math.random();
+      const v = Math.random();
+      const theta = u * 2.0 * Math.PI;
+      const phi = Math.acos(2.0 * v - 1.0);
+      const r = globeRadius * 1.002;
+
+      const x = r * Math.sin(phi) * Math.cos(theta);
+      const y = r * Math.sin(phi) * Math.sin(theta);
+      const z = r * Math.cos(phi);
+
+      dotPositions[i * 3] = x;
+      dotPositions[i * 3 + 1] = y;
+      dotPositions[i * 3 + 2] = z;
+
+      const pickColor = Math.random() > 0.4 ? (Math.random() > 0.5 ? c1 : c2) : c3;
+      dotColors[i * 3] = pickColor.r;
+      dotColors[i * 3 + 1] = pickColor.g;
+      dotColors[i * 3 + 2] = pickColor.b;
+    }
+
+    dotGeo.setAttribute('position', new THREE.BufferAttribute(dotPositions, 3));
+    dotGeo.setAttribute('color', new THREE.BufferAttribute(dotColors, 3));
+
+    const dotMat = new THREE.PointsMaterial({
+      size: 2.2,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.65
+    });
+    const surfaceDots = new THREE.Points(dotGeo, dotMat);
+    globeGroup.add(surfaceDots);
+
+    // D. Atmospheric Rim Shell (Glow Halo)
+    const atmoGeo = new THREE.SphereGeometry(globeRadius * 1.04, 32, 32);
+    const atmoMat = new THREE.MeshBasicMaterial({
+      color: 0x3b86ff,
+      transparent: true,
+      opacity: 0.12,
+      blending: THREE.AdditiveBlending
+    });
+    const atmoMesh = new THREE.Mesh(atmoGeo, atmoMat);
+    globeGroup.add(atmoMesh);
+
+    // Outer glow ring around globe
+    const outerGlowGeo = new THREE.RingGeometry(globeRadius * 1.01, globeRadius * 1.28, 64);
+    const outerGlowMat = new THREE.MeshBasicMaterial({
+      color: 0x8fcaff,
+      transparent: true,
+      opacity: 0.18,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending
+    });
+    const outerGlowRing = new THREE.Mesh(outerGlowGeo, outerGlowMat);
+    globeGroup.add(outerGlowRing);
+
+    // E. 2 Tilted Orbital Paths with Traveling Data Beacons
+    const orbitalGroup = new THREE.Group();
+    scene.add(orbitalGroup);
+
+    const makeOrbit = (radiusX, radiusY, tiltX, tiltZ) => {
+      const curvePts = [];
+      const count = 72;
+      for (let i = 0; i <= count; i++) {
+        const a = (i / count) * Math.PI * 2;
+        curvePts.push(new THREE.Vector3(radiusX * Math.cos(a), 0, radiusY * Math.sin(a)));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(curvePts);
+      const mat = new THREE.LineDashedMaterial({
+        color: 0x8fcaff,
+        dashSize: 4,
+        gapSize: 4,
+        transparent: true,
+        opacity: 0.35
+      });
+      const line = new THREE.Line(geo, mat);
+      line.computeLineDistances();
+      line.rotation.x = tiltX;
+      line.rotation.z = tiltZ;
+      return line;
+    };
+
+    const orbit1 = makeOrbit(globeRadius * 1.25, globeRadius * 1.15, 0.45, -0.2);
+    const orbit2 = makeOrbit(globeRadius * 1.35, globeRadius * 1.22, -0.65, 0.4);
+    orbitalGroup.add(orbit1);
+    orbitalGroup.add(orbit2);
+
+    // Traveling satellites on orbital rings
+    const satGeo = new THREE.SphereGeometry(2.5, 8, 8);
+    const satMat = new THREE.MeshBasicMaterial({ color: 0x8fcaff });
+    const sat1 = new THREE.Mesh(satGeo, satMat);
+    const sat2 = new THREE.Mesh(satGeo, satMat);
+    scene.add(sat1);
+    scene.add(sat2);
+
+    // F. Skill Surface Markers & Radial Stems on Globe
+    const nodeGeo = new THREE.SphereGeometry(2.4, 8, 8);
+    const nodeMat = new THREE.MeshBasicMaterial({ color: 0x8fcaff });
+    const nodeMeshes = [];
+
+    skillPoints.forEach((sp) => {
+      const surfacePos = sp.dir.clone().multiplyScalar(globeRadius);
+      const marker = new THREE.Mesh(nodeGeo, nodeMat);
+      marker.position.copy(surfacePos);
+      globeGroup.add(marker);
+      nodeMeshes.push(marker);
+
+      // Fine radial stem connecting globe surface to skill label
+      const stemGeo = new THREE.BufferGeometry().setFromPoints([
+        surfacePos,
+        sp.dir.clone().multiplyScalar(labelRadius * 0.95)
+      ]);
+      const stemMat = new THREE.LineBasicMaterial({
+        color: 0x3b86ff,
+        transparent: true,
+        opacity: 0.22
+      });
+      const stem = new THREE.Line(stemGeo, stemMat);
+      globeGroup.add(stem);
+    });
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0x8fcaff, 1.8);
+    dirLight.position.set(200, 150, 300);
+    scene.add(dirLight);
+
+    const backLight = new THREE.DirectionalLight(0x1a3668, 1.0);
+    backLight.position.set(-200, -100, -250);
+    scene.add(backLight);
+
+    // 4. Performance & Visibility Guard
     let isVisible = true;
     let isTabActive = !document.hidden;
 
-    // Pause when canvas is scrolled out of viewport
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          isVisible = entry.isIntersecting;
+        entries.forEach((e) => {
+          isVisible = e.isIntersecting;
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.05 }
     );
-
-    if (canvas) observer.observe(canvas);
+    observer.observe(container);
 
     const handleVisibility = () => {
       isTabActive = !document.hidden;
     };
     document.addEventListener('visibilitychange', handleVisibility);
 
-    const onMouseDown = (e) => {
-      isDragging = true;
-      lastMouseX = e.clientX || (e.touches && e.touches[0].clientX);
-      lastMouseY = e.clientY || (e.touches && e.touches[0].clientY);
+    // 5. Mouse & Touch Drag Interactions
+    const onPointerDown = (e) => {
+      // Don't drag if user clicked directly on an interactive button
+      if (e.target.closest('button')) return;
+      isDraggingRef.current = true;
+      resetTargetRef.current = null;
+
+      const clientX = e.clientX ?? (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
+      lastMousePosRef.current = { x: clientX, y: clientY };
     };
 
-    const onMouseMove = (e) => {
-      if (!isDragging) return;
-      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-      const dx = clientX - lastMouseX;
-      const dy = clientY - lastMouseY;
+    const onPointerMove = (e) => {
+      if (!isDraggingRef.current) return;
+      const clientX = e.clientX ?? (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
 
-      angleY = dx * 0.00035;
-      angleX = -dy * 0.00035;
+      const dx = clientX - lastMousePosRef.current.x;
+      const dy = clientY - lastMousePosRef.current.y;
 
-      lastMouseX = clientX;
-      lastMouseY = clientY;
+      velocityRef.current.y = dx * 0.0035;
+      velocityRef.current.x = dy * 0.0035;
+
+      rotationRef.current.y += velocityRef.current.y;
+      rotationRef.current.x += velocityRef.current.x;
+
+      // Clamp vertical tilt between -70deg and +70deg
+      rotationRef.current.x = Math.max(-1.2, Math.min(1.2, rotationRef.current.x));
+
+      lastMousePosRef.current = { x: clientX, y: clientY };
     };
 
-    const onMouseUp = () => {
-      isDragging = false;
+    const onPointerUp = () => {
+      isDraggingRef.current = false;
     };
 
-    canvas.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    container.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
 
-    canvas.addEventListener('touchstart', onMouseDown, { passive: true });
-    window.addEventListener('touchmove', onMouseMove, { passive: true });
-    window.addEventListener('touchend', onMouseUp);
+    container.addEventListener('touchstart', onPointerDown, { passive: true });
+    window.addEventListener('touchmove', onPointerMove, { passive: true });
+    window.addEventListener('touchend', onPointerUp);
 
-    const render = () => {
-      animId = requestAnimationFrame(render);
+    // Resize handling
+    const handleResize = () => {
+      if (!container || !renderer) return;
+      width = container.clientWidth || 780;
+      height = container.clientHeight || 560;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    };
+    window.addEventListener('resize', handleResize);
 
-      // Only render if tab is focused and element is on-screen
+    // 6. Animation & Projection Render Loop
+    let animId;
+    let orbitClock = 0;
+    const tempVec = new THREE.Vector3();
+
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+
       if (!isVisible || !isTabActive) return;
 
-      ctx.clearRect(0, 0, width, height);
+      orbitClock += 0.015;
 
-      const sinX = Math.sin(angleX);
-      const cosX = Math.cos(angleX);
-      const sinY = Math.sin(angleY);
-      const cosY = Math.cos(angleY);
-
-      tags.forEach((tag) => {
-        const x1 = tag.x * cosY - tag.z * sinY;
-        const z1 = tag.z * cosY + tag.x * sinY;
-
-        const y2 = tag.y * cosX - z1 * sinX;
-        const z2 = z1 * cosX + tag.y * sinX;
-
-        tag.x = x1;
-        tag.y = y2;
-        tag.z = z2;
-
-        const depth = (tag.z + radius) / (2 * radius);
-        const scale = 0.65 + depth * 0.6;
-        const alpha = 0.25 + depth * 0.75;
-        const fontSize = Math.round(11 * scale);
-
-        const screenX = width / 2 + tag.x;
-        const screenY = height / 2 + tag.y;
-
-        ctx.font = `${fontSize}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = depth > 0.6 ? `rgba(255, 255, 255, ${alpha})` : `rgba(143, 202, 255, ${alpha * 0.85})`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(tag.text, screenX, screenY);
-      });
-
-      if (!isDragging) {
-        angleX *= 0.96;
-        angleY *= 0.96;
-        if (Math.abs(angleX) < 0.0012) angleX = 0.0012;
-        if (Math.abs(angleY) < 0.0016) angleY = 0.0016;
+      // Smooth reset transition
+      if (resetTargetRef.current) {
+        rotationRef.current.x += (resetTargetRef.current.x - rotationRef.current.x) * 0.08;
+        rotationRef.current.y += (resetTargetRef.current.y - rotationRef.current.y) * 0.08;
+        if (
+          Math.abs(resetTargetRef.current.x - rotationRef.current.x) < 0.005 &&
+          Math.abs(resetTargetRef.current.y - rotationRef.current.y) < 0.005
+        ) {
+          resetTargetRef.current = null;
+        }
+      } else if (!isDraggingRef.current) {
+        // Natural continuous auto-rotation
+        if (!prefersReducedMotion) {
+          velocityRef.current.y = 0.0016;
+        }
+        rotationRef.current.y += velocityRef.current.y;
+        rotationRef.current.x += velocityRef.current.x * 0.92;
+        rotationRef.current.x = Math.max(-1.2, Math.min(1.2, rotationRef.current.x));
       }
+
+      // Apply rotation to globe
+      globeGroup.rotation.x = rotationRef.current.x;
+      globeGroup.rotation.y = rotationRef.current.y;
+
+      // Animate orbital satellites
+      const o1Angle = orbitClock * 0.6;
+      const r1 = globeRadius * 1.25;
+      sat1.position.set(r1 * Math.cos(o1Angle), 0, r1 * Math.sin(o1Angle));
+      sat1.position.applyEuler(new THREE.Euler(0.45, 0, -0.2));
+
+      const o2Angle = -orbitClock * 0.8;
+      const r2 = globeRadius * 1.35;
+      sat2.position.set(r2 * Math.cos(o2Angle), 0, r2 * Math.sin(o2Angle));
+      sat2.position.applyEuler(new THREE.Euler(-0.65, 0, 0.4));
+
+      // Make outer glow ring billow toward camera
+      outerGlowRing.lookAt(camera.position);
+
+      renderer.render(scene, camera);
+
+      // Project 32 skill labels from 3D coordinates onto HTML canvas overlay
+      const labelEls = labelElementsRef.current;
+      const wHalf = width / 2;
+      const hHalf = height / 2;
+
+      skillPoints.forEach((sp, idx) => {
+        const el = labelEls[idx];
+        if (!el) return;
+
+        // Position on label radius
+        tempVec.copy(sp.dir).multiplyScalar(labelRadius);
+        tempVec.applyEuler(globeGroup.rotation);
+
+        // Check if facing the front (z > 0 means towards camera in perspective projection)
+        const isFront = tempVec.z > -globeRadius * 0.25;
+        const normalizedDepth = (tempVec.z + globeRadius) / (2 * globeRadius);
+
+        // Project to 2D screen coordinates
+        tempVec.project(camera);
+        const screenX = tempVec.x * wHalf + wHalf;
+        const screenY = -(tempVec.y * hHalf) + hHalf;
+
+        // Apply 3D translate and dynamic depth styling
+        el.style.transform = `translate3d(${Math.round(screenX)}px, ${Math.round(screenY)}px, 0) translate(-50%, -50%)`;
+
+        // Manage depth z-index
+        el.style.zIndex = Math.round(normalizedDepth * 100) + 10;
+        el.dataset.front = isFront ? 'true' : 'false';
+      });
     };
 
-    render();
+    animate();
 
+    // 7. Cleanup & Disposals
     return () => {
       observer.disconnect();
       document.removeEventListener('visibilitychange', handleVisibility);
-      canvas.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      canvas.removeEventListener('touchstart', onMouseDown);
-      window.removeEventListener('touchmove', onMouseMove);
-      window.removeEventListener('touchend', onMouseUp);
+      window.removeEventListener('resize', handleResize);
+      container.removeEventListener('mousedown', onPointerDown);
+      window.removeEventListener('mousemove', onPointerMove);
+      window.removeEventListener('mouseup', onPointerUp);
+      container.removeEventListener('touchstart', onPointerDown);
+      window.removeEventListener('touchmove', onPointerMove);
+      window.removeEventListener('touchend', onPointerUp);
       cancelAnimationFrame(animId);
+
+      // Dispose geometries & materials
+      sphereGeo.dispose();
+      sphereMat.dispose();
+      gridMat.dispose();
+      dotGeo.dispose();
+      dotMat.dispose();
+      atmoGeo.dispose();
+      atmoMat.dispose();
+      outerGlowGeo.dispose();
+      outerGlowMat.dispose();
+      satGeo.dispose();
+      satMat.dispose();
+      nodeGeo.dispose();
+      nodeMat.dispose();
+      renderer?.dispose();
     };
-  }, []);
+  }, [skillPoints]);
 
   return (
-    <section id="skills" className="section" ref={containerRef}>
+    <section id="skills" className="section skills-section">
       <div className="container">
         
         {/* Section Header */}
-        <div className="section-header">
-          <div className="section-tag">
+        <div className="section-header text-center" style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 2.5rem' }}>
+          <div className="section-tag" style={{ justifyContent: 'center' }}>
             <span>02 // TECHNICAL ARSENAL</span>
           </div>
           <h2 className="section-title">
             Skills &amp; <span className="font-serif-italic">Competencies</span>
           </h2>
-          <p className="section-subtitle">
-            Verified technical stack across programming languages, web frameworks, databases, developer tooling, and cloud platforms.
+          <p className="section-subtitle" style={{ margin: '0 auto' }}>
+            Technologies and tools I use to build web applications, backend systems, and intelligent solutions.
           </p>
         </div>
 
-        <div className="skills-layout">
-          
-          {/* Left: 3D Interactive Sphere */}
-          <div className="skill-canvas-wrap">
-            <canvas
-              ref={canvasRef}
-              style={{ width: '100%', height: '100%', cursor: 'grab' }}
-              aria-label="3D Interactive Skills Cloud"
-            />
-            <div className="skill-canvas-hint">Drag sphere to spin</div>
-          </div>
+        {/* Minimal Category Filter Pills */}
+        <div className="globe-filters-bar" role="tablist" aria-label="Technology Skill Categories">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              role="tab"
+              aria-selected={activeCategory === cat.id}
+              className={`globe-filter-pill ${activeCategory === cat.id ? 'active' : ''}`}
+              onClick={() => {
+                setActiveCategory(cat.id);
+                setSelectedSkill(null);
+              }}
+            >
+              <span>{cat.label}</span>
+            </button>
+          ))}
+        </div>
 
-          {/* Right: Category Tabs & Accessible Matrix */}
-          <div>
-            <div className="category-tabs" role="tablist" aria-label="Skill Categories">
-              {PORTFOLIO_DATA.skills.categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeCategory === cat.id}
-                  className={`cat-tab ${activeCategory === cat.id ? 'active' : ''}`}
-                  onClick={() => setActiveCategory(cat.id)}
-                >
-                  {cat.label}
-                </button>
-              ))}
+        {/* Centered 3D Interactive Earth Technology Globe */}
+        <div className="earth-globe-wrapper">
+          
+          <div
+            ref={containerRef}
+            className="earth-globe-viewport"
+            role="region"
+            aria-label="Interactive 3D Technology Earth Globe"
+          >
+            {/* Three.js WebGL Canvas */}
+            <canvas ref={canvasRef} className="earth-webgl-canvas" />
+
+            {/* Projected Skill Labels Layer */}
+            <div ref={labelsContainerRef} className="earth-labels-layer" aria-hidden="false">
+              {skillPoints.map((skill, idx) => {
+                const matchesCategory = activeCategory === 'all' || skill.category === activeCategory;
+                const isSelected = selectedSkill?.name === skill.name;
+                const isHovered = hoveredSkill?.name === skill.name;
+
+                return (
+                  <button
+                    key={skill.name}
+                    ref={(el) => (labelElementsRef.current[idx] = el)}
+                    type="button"
+                    className={`earth-skill-chip ${matchesCategory ? 'in-category' : 'out-category'} ${
+                      isSelected ? 'chip-selected' : ''
+                    } ${isHovered ? 'chip-hovered' : ''}`}
+                    onClick={() => setSelectedSkill(skill)}
+                    onMouseEnter={() => setHoveredSkill(skill)}
+                    onMouseLeave={() => setHoveredSkill(null)}
+                    aria-label={`Inspect ${skill.name} (${skill.type})`}
+                  >
+                    <span className="chip-dot" aria-hidden="true" />
+                    <span className="chip-text">{skill.name}</span>
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="skills-matrix" role="region" aria-label="Skill List" aria-live="polite">
-              {filteredSkills.map((skill) => (
-                <div key={skill.name} className="skill-tile">
-                  <span className="skill-tile-name">{skill.name}</span>
+            {/* Subtle Controls Overlay */}
+            <div className="globe-controls-overlay">
+              <span className="globe-hint-pill">
+                <Sparkles size={12} aria-hidden="true" />
+                <span>Drag to rotate • Click skill to inspect</span>
+              </span>
+
+              <button
+                type="button"
+                onClick={handleResetRotation}
+                className="globe-reset-btn"
+                title="Reset Earth Globe Orientation"
+                aria-label="Reset Earth Globe Rotation"
+              >
+                <RotateCcw size={13} aria-hidden="true" />
+                <span>Reset View</span>
+              </button>
+            </div>
+
+          </div>
+
+          {/* Floating Selected Skill Information HUD Badge */}
+          <div className="globe-hud-panel" aria-live="polite">
+            {selectedSkill ? (
+              <div className="hud-card hud-active">
+                <div className="hud-header">
+                  <div className="hud-badge">
+                    <CheckCircle2 size={13} aria-hidden="true" />
+                    <span>{selectedSkill.type}</span>
+                  </div>
+                  <h3 className="hud-title">{selectedSkill.name}</h3>
+                </div>
+                <p className="hud-desc">{selectedSkill.desc}</p>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSkill(null)}
+                  className="hud-dismiss-btn"
+                >
+                  Dismiss
+                </button>
+              </div>
+            ) : (
+              <div className="hud-card hud-idle">
+                <div className="hud-idle-content">
+                  <Info size={16} className="hud-info-icon" aria-hidden="true" />
+                  <span>
+                    Explore <strong>32 technical competencies</strong> across Full-Stack, Machine Learning, Databases &amp; DevOps.
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Accessible Semantic Fallback for Non-WebGL or Screen Readers */}
+          {!webglSupported && (
+            <div className="webgl-fallback-matrix" role="region" aria-label="Accessible Skills Matrix">
+              <h3 className="sr-only">Technical Skills by Category</h3>
+              {categories.filter(c => c.id !== 'all').map((cat) => (
+                <div key={cat.id} className="fallback-category-group">
+                  <h4 className="fallback-group-title">{cat.label}</h4>
+                  <ul className="fallback-skill-list">
+                    {skills.filter(s => s.category === cat.id).map(s => (
+                      <li key={s.name} className="fallback-skill-item">
+                        <strong>{s.name}</strong> — {s.desc}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ))}
             </div>
-          </div>
+          )}
 
         </div>
 
