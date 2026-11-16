@@ -149,7 +149,7 @@ export const PORTFOLIO_DATA = {
         "Tested with 53+ Pytest unit/integration tests and Playwright end-to-end tests, containerized with Docker and deployed on Vercel."
       ],
       githubUrl: "https://github.com/Samay-P07/netflix-content-recommendation-system",
-      liveUrl: null
+      liveUrl: "https://netflix-content-recommendation-syst.vercel.app/"
     },
     {
       id: "fitcore",
@@ -172,7 +172,7 @@ export const PORTFOLIO_DATA = {
         "Wrote 8 integration tests (100% pass rate) and deployed on Render with Gunicorn and WhiteNoise."
       ],
       githubUrl: "https://github.com/Samay-P07/Gym-Management-System",
-      liveUrl: null
+      liveUrl: "https://fitcore-gym-6y5u.onrender.com"
     },
     {
       id: "accident-atlas",
