@@ -654,8 +654,14 @@ body.has-custom-cursor .reticle {
   background: var(--surface-card);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  padding: 2.5rem;
+  padding: 1.6rem;
   backdrop-filter: blur(12px);
+}
+
+@media (min-width: 640px) {
+  .about-bio-card {
+    padding: 2.5rem;
+  }
 }
 
 .about-bio-text {

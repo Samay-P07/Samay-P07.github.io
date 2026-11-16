@@ -12,8 +12,9 @@ export const PORTFOLIO_DATA = {
     githubUrl: "https://github.com/Samay-P07",
     linkedinUrl: "https://www.linkedin.com/in/samaypatel7",
     bio: [
-      "I am a Software Developer and currently pursuing my Master's degree in Web Engineering at TU Chemnitz, Germany. I have hands-on experience in building full-stack web applications, developing REST APIs, working with databases, and integrating machine learning features. I enjoy solving real-world problems through technology and building applications that are practical, scalable, and user-friendly.",
-      "I completed my Bachelor's degree in Information Technology with a CGPA of 8.94. During my internships, I gained practical experience working with Django, Flask, databases, frontend technologies, and application development. I enjoy learning new technologies, solving technical challenges, and turning ideas into working applications."
+      "I am currently pursuing an M.Sc. in Web Engineering at Technische Universität Chemnitz, Germany. I completed my Bachelor's degree in Information Technology with a CGPA of 8.94.",
+      "My interests include software development, backend engineering, full-stack applications, data science, and artificial intelligence. I have hands-on experience in building full-stack web applications, developing REST APIs, working with databases, and integrating machine learning features.",
+      "During my internships, I gained practical experience working with Django, Flask, databases, frontend technologies, and application development. I enjoy learning new technologies, solving technical challenges, and turning ideas into working applications that are practical, scalable, and user-friendly."
     ],
     credentials: [
       { label: "LOCATION", value: "Chemnitz, Germany" },
