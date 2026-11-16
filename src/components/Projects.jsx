@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { ExternalLink, X, Info } from 'lucide-react';
+import { ExternalLink, ChevronDown, ChevronUp, Layers, CheckCircle2 } from 'lucide-react';
 import { GithubIcon } from './Icons';
 import { PORTFOLIO_DATA } from '../data/portfolioData';
 
 export default function Projects() {
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+
+  const toggleExpand = (id) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
 
   return (
-    <section id="projects" className="section">
+    <section id="projects" className="section projects-editorial-section">
       <div className="container">
         
         {/* Section Header */}
@@ -23,189 +27,174 @@ export default function Projects() {
           </p>
         </div>
 
-        {/* Projects Grid */}
-        <div className="projects-grid">
-          {PORTFOLIO_DATA.projects.map((project) => (
-            <article key={project.id} className="project-card" tabIndex={0}>
-              
-              {/* Media Aspect Frame */}
-              <div className="project-media-frame">
-                <img
-                  src={project.image}
-                  alt={`${project.shortTitle} project interface`}
-                  width="600"
-                  height="338"
-                  loading="lazy"
-                />
-              </div>
+        {/* Compact Horizontal Editorial Showcase List */}
+        <div className="editorial-projects-list">
+          {PORTFOLIO_DATA.projects.map((project, idx) => {
+            const isExpanded = expandedId === project.id;
+            const isEven = idx % 2 === 1;
+            const projectNumber = String(idx + 1).padStart(2, '0');
 
-              {/* Card Body */}
-              <div className="project-body">
-                <div className="project-header">
-                  <h3 className="project-title">{project.shortTitle}</h3>
-                  <div className="project-subtitle">{project.subtitle}</div>
-                </div>
+            return (
+              <article
+                key={project.id}
+                className={`editorial-project-card ${isEven ? 'row-reversed' : ''} ${
+                  isExpanded ? 'is-expanded' : ''
+                }`}
+                aria-labelledby={`project-title-${project.id}`}
+              >
+                {/* 1. Media Frame Column */}
+                <div className="editorial-media-column">
+                  <div className="editorial-media-frame">
+                    <img
+                      src={project.image}
+                      alt={`${project.shortTitle} project interface`}
+                      width="580"
+                      height="360"
+                      loading="lazy"
+                    />
 
-                <p className="project-desc">
-                  {project.description}
-                </p>
-
-                {/* Metrics Row */}
-                <div className="project-metrics-row" aria-label="Key Technical Metrics">
-                  {project.metrics.map((m) => (
-                    <div key={m.label} className="metric-col">
-                      <div className="m-label">{m.label}</div>
-                      <div className="m-val">{m.value}</div>
+                    {/* Subtle Overlay Tag */}
+                    <div className="media-overlay-badge">
+                      {project.liveUrl ? (
+                        <span className="live-status-pill">
+                          <span className="live-pulsar" aria-hidden="true" />
+                          <span>Live System</span>
+                        </span>
+                      ) : (
+                        <span className="repo-status-pill">
+                          <span>Open Source</span>
+                        </span>
+                      )}
                     </div>
-                  ))}
-                </div>
-
-                {/* CV-Supported Technical Highlights */}
-                <ul className="project-features-list" aria-label="Technical Achievements">
-                  {project.highlights.slice(0, 3).map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-
-                {/* Tech Pills */}
-                <div className="tech-tag-row" aria-label="Technologies Used">
-                  {project.technologies.map((tech) => (
-                    <span key={tech} className="tech-pill">
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Actions */}
-                <div className="project-actions">
-                  {project.liveUrl && (
-                    <a
-                      href={project.liveUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn btn-primary btn-sm"
-                      aria-label={`Open live web demo of ${project.shortTitle}`}
-                    >
-                      <ExternalLink size={14} aria-hidden="true" />
-                      <span>Live Demo</span>
-                    </a>
-                  )}
-
-                  <a
-                    href={project.githubUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-secondary btn-sm"
-                    aria-label={`View ${project.shortTitle} source code on GitHub`}
-                  >
-                    <GithubIcon size={14} aria-hidden="true" />
-                    <span>Source Code</span>
-                  </a>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedProject(project)}
-                    className="btn btn-ghost btn-sm"
-                    style={{ marginLeft: 'auto' }}
-                    aria-label={`View full case study for ${project.shortTitle}`}
-                  >
-                    <Info size={14} aria-hidden="true" />
-                    <span>Details</span>
-                  </button>
-                </div>
-
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {/* Polished Case Study Details Modal */}
-        {selectedProject && (
-          <div
-            className="project-modal-backdrop"
-            onClick={() => setSelectedProject(null)}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-title"
-          >
-            <div
-              className="project-modal-panel"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-header">
-                <div>
-                  <div className="section-tag" style={{ marginBottom: '0.4rem' }}>
-                    <span>PROJECT CASE STUDY</span>
                   </div>
-                  <h4 id="modal-title" className="modal-title">
-                    {selectedProject.title}
-                  </h4>
-                </div>
-                <button
-                  type="button"
-                  className="modal-close-btn"
-                  onClick={() => setSelectedProject(null)}
-                  aria-label="Close project details"
-                >
-                  <X size={20} aria-hidden="true" />
-                </button>
-              </div>
-
-              <div className="modal-body">
-                <div className="modal-media-frame">
-                  <img
-                    src={selectedProject.image}
-                    alt={selectedProject.shortTitle}
-                  />
                 </div>
 
-                <p className="modal-desc">
-                  {selectedProject.description}
-                </p>
+                {/* 2. Content Body Column */}
+                <div className="editorial-content-column">
+                  
+                  {/* Metadata Bar */}
+                  <div className="editorial-meta-row">
+                    <span className="project-index-tag">// {projectNumber}</span>
+                    <span className="meta-sep">•</span>
+                    <span className="project-category-tag">{project.subtitle}</span>
+                  </div>
 
-                <h5 className="modal-subheading">Technical Architecture &amp; CV Highlights:</h5>
-                <ul className="modal-highlights-list">
-                  {selectedProject.highlights.map((h, i) => (
-                    <li key={i}>{h}</li>
-                  ))}
-                </ul>
+                  {/* Serif Project Headline */}
+                  <h3 id={`project-title-${project.id}`} className="editorial-project-title">
+                    {project.shortTitle}
+                  </h3>
 
-                <h5 className="modal-subheading">Technologies:</h5>
-                <div className="tech-tag-row">
-                  {selectedProject.technologies.map((t) => (
-                    <span key={t} className="tech-pill">
-                      {t}
-                    </span>
-                  ))}
-                </div>
+                  {/* Concise Description */}
+                  <p className="editorial-project-desc">
+                    {project.description}
+                  </p>
 
-                <div className="modal-actions">
-                  {selectedProject.liveUrl && (
+                  {/* Compact Horizontal Key Metrics Row (4 Metrics) */}
+                  <div className="editorial-metrics-strip" aria-label="Key Technical Metrics">
+                    {project.metrics.map((m) => (
+                      <div key={m.label} className="metric-chip">
+                        <span className="chip-label">{m.label}</span>
+                        <span className="chip-value">{m.value}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Compact Technology Stack Pills */}
+                  <div className="editorial-tech-ribbon" aria-label="Technologies Used">
+                    {project.technologies.map((tech) => (
+                      <span key={tech} className="tech-badge">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Primary & Secondary Action Buttons */}
+                  <div className="editorial-actions-bar">
+                    {project.liveUrl && (
+                      <a
+                        href={project.liveUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-primary btn-sm"
+                        aria-label={`Open live web demo of ${project.shortTitle}`}
+                      >
+                        <ExternalLink size={13} aria-hidden="true" />
+                        <span>Live Demo</span>
+                      </a>
+                    )}
+
                     <a
-                      href={selectedProject.liveUrl}
+                      href={project.githubUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="btn btn-primary"
+                      className="btn btn-secondary btn-sm"
+                      aria-label={`View ${project.shortTitle} source code on GitHub`}
                     >
-                      <ExternalLink size={15} aria-hidden="true" />
-                      <span>Visit Live Demo</span>
+                      <GithubIcon size={13} aria-hidden="true" />
+                      <span>Source Code</span>
                     </a>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(project.id)}
+                      className="btn btn-ghost btn-sm details-toggle-btn"
+                      aria-expanded={isExpanded}
+                      aria-controls={`drawer-${project.id}`}
+                      aria-label={`${isExpanded ? 'Collapse' : 'Expand'} case study for ${project.shortTitle}`}
+                    >
+                      <span>{isExpanded ? 'Close Case Study' : 'Case Study Details'}</span>
+                      {isExpanded ? (
+                        <ChevronUp size={14} aria-hidden="true" />
+                      ) : (
+                        <ChevronDown size={14} aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Expandable Case Study Drawer (Preserves 100% of CV Bullet Points) */}
+                  {isExpanded && (
+                    <div
+                      id={`drawer-${project.id}`}
+                      className="editorial-expanded-drawer"
+                      role="region"
+                      aria-label={`Full case study details for ${project.shortTitle}`}
+                    >
+                      <div className="drawer-inner-content">
+                        
+                        <div className="drawer-header-row">
+                          <div className="drawer-tag">
+                            <Layers size={13} aria-hidden="true" />
+                            <span>Technical Architecture &amp; CV Highlights:</span>
+                          </div>
+                          <span className="drawer-full-title">{project.title}</span>
+                        </div>
+
+                        {/* Complete Bullet Points (100% Verbatim) */}
+                        <ul className="drawer-highlights-list">
+                          {project.highlights.map((bullet, bIdx) => (
+                            <li key={bIdx}>
+                              <CheckCircle2 size={14} className="bullet-check-icon" aria-hidden="true" />
+                              <span>{bullet}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {/* Footer in Expanded View */}
+                        <div className="drawer-footer-row">
+                          <span className="drawer-repo-note">
+                            Verified from Samay Patel's official engineering resume and repository commit tree.
+                          </span>
+                        </div>
+
+                      </div>
+                    </div>
                   )}
 
-                  <a
-                    href={selectedProject.githubUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-secondary"
-                  >
-                    <GithubIcon size={15} aria-hidden="true" />
-                    <span>View GitHub Repository</span>
-                  </a>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
+              </article>
+            );
+          })}
+        </div>
 
       </div>
     </section>
