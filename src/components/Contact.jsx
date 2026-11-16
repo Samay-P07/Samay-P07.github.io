@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, MapPin, Phone, Send, CheckCircle2 } from 'lucide-react';
+import { Mail, MapPin, Phone, Send, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from './Icons';
 import confetti from 'canvas-confetti';
 import { PORTFOLIO_DATA } from '../data/portfolioData';
@@ -13,7 +13,7 @@ export default function Contact() {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitView, setSubmitView] = useState('idle'); // 'idle' | 'success' | 'activation'
   const [submittedName, setSubmittedName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -53,57 +53,81 @@ export default function Contact() {
     const name = formState.name.trim();
 
     try {
-      if (formspreeId) {
-        const response = await fetch(`https://formspree.io/f/${formspreeId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json'
-          },
-          body: JSON.stringify({
-            name: formState.name.trim(),
-            email: formState.email.trim(),
-            subject: formState.subject.trim(),
-            message: formState.message.trim()
-          })
-        });
+      // Target endpoint (Formspree if ID configured, otherwise FormSubmit direct to samaypatel713@gmail.com)
+      const endpoint = formspreeId
+        ? `https://formspree.io/f/${formspreeId}`
+        : `https://formsubmit.co/ajax/${PORTFOLIO_DATA.personal.email}`;
 
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || 'Server rejected submission');
-        }
-      } else {
-        // Save inquiry to browser storage so no inquiry is ever lost
+      const payload = {
+        name: formState.name.trim(),
+        email: formState.email.trim(),
+        subject: formState.subject.trim(),
+        message: formState.message.trim(),
+        _subject: `New Portfolio Inquiry from ${formState.name.trim()}: ${formState.subject.trim()}`,
+        _replyto: formState.email.trim(),
+        _template: 'table',
+        _captcha: 'false'
+      };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      // Save a local backup in browser storage so inquiry is never lost
+      try {
         const existing = JSON.parse(localStorage.getItem('samay_portfolio_messages') || '[]');
         existing.push({
           date: new Date().toISOString(),
-          name: formState.name.trim(),
-          email: formState.email.trim(),
-          subject: formState.subject.trim(),
-          message: formState.message.trim()
+          ...payload
         });
         localStorage.setItem('samay_portfolio_messages', JSON.stringify(existing));
-
-        // Smooth realistic dispatch animation
-        await new Promise((resolve) => setTimeout(resolve, 600));
-      }
-
-      setSubmittedName(name);
-      setSubmitSuccess(true);
-      setFormState({ name: '', email: '', subject: '', message: '' });
-
-      try {
-        confetti({
-          particleCount: 65,
-          spread: 75,
-          origin: { y: 0.6 },
-          colors: ['#8fcaff', '#ffffff', '#3b86ff', '#5ce1e6']
-        });
       } catch {
-        // ignore
+        // ignore storage errors
       }
-    } catch (err) {
-      setErrorMessage(err.message || 'Something went wrong while sending. Please try again.');
+
+      // Check if FormSubmit requires initial one-time email activation
+      if (
+        data &&
+        (data.message?.toLowerCase().includes('activation') ||
+         (data.success === 'false' || data.success === false) && data.message?.toLowerCase().includes('activ'))
+      ) {
+        setSubmittedName(name);
+        setSubmitView('activation');
+        setFormState({ name: '', email: '', subject: '', message: '' });
+        return;
+      }
+
+      if (data && (data.success === true || data.success === 'true' || response.ok)) {
+        setSubmittedName(name);
+        setSubmitView('success');
+        setFormState({ name: '', email: '', subject: '', message: '' });
+
+        try {
+          confetti({
+            particleCount: 70,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ['#8fcaff', '#ffffff', '#3b86ff', '#5ce1e6']
+          });
+        } catch {
+          // ignore
+        }
+      } else {
+        setErrorMessage(
+          data?.message || 'Unable to deliver message at this time. Please email directly at samaypatel713@gmail.com'
+        );
+      }
+    } catch {
+      setErrorMessage(
+        'Network transmission error. Please verify your connection or email directly at samaypatel713@gmail.com'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -122,7 +146,7 @@ export default function Contact() {
             Let's <span className="font-serif-italic">Connect</span>
           </h2>
           <p className="section-subtitle">
-            I'm always interested in discussing new opportunities, interesting projects, and collaborations. Feel free to get in touch.
+            I'm always interested in discussing new opportunities, software engineering roles, and collaborations. Feel free to get in touch.
           </p>
         </div>
 
@@ -203,21 +227,94 @@ export default function Contact() {
 
           </div>
 
-          {/* Right Column: Clean Form & Instant Confirmation */}
+          {/* Right Column: Real Email Form & Feedback */}
           <div className="contact-form-panel">
             
-            {submitSuccess ? (
+            {submitView === 'activation' ? (
+              <div className="contact-success-screen" role="status" aria-live="polite">
+                <div
+                  className="success-icon-badge"
+                  style={{
+                    borderColor: '#ffbe3b',
+                    background: 'rgba(255, 190, 59, 0.1)',
+                    boxShadow: '0 0 30px rgba(255, 190, 59, 0.25)'
+                  }}
+                >
+                  <Mail size={38} color="#ffbe3b" aria-hidden="true" />
+                </div>
+                
+                <h3 className="success-screen-title" style={{ fontSize: '1.75rem' }}>
+                  One-Time Activation Required
+                </h3>
+                
+                <div
+                  style={{
+                    background: 'rgba(255, 190, 59, 0.08)',
+                    border: '1px solid rgba(255, 190, 59, 0.3)',
+                    borderRadius: '12px',
+                    padding: '1.2rem',
+                    color: '#e2e8f0',
+                    fontSize: '0.92rem',
+                    lineHeight: '1.6',
+                    textAlign: 'left',
+                    marginBottom: '1.2rem',
+                    width: '100%',
+                    maxWidth: '460px'
+                  }}
+                >
+                  <p style={{ margin: '0 0 0.8rem 0' }}>
+                    FormSubmit has sent an activation email to:
+                    <br />
+                    <strong style={{ color: '#8fcaff', fontSize: '1rem' }}>{PORTFOLIO_DATA.personal.email}</strong>
+                  </p>
+                  
+                  <div style={{ fontSize: '0.86rem', color: '#cbd5e1' }}>
+                    <div style={{ marginBottom: '6px' }}><strong>Step 1:</strong> Open your Gmail inbox (check <strong>Spam / Updates</strong> folder if not in Primary).</div>
+                    <div style={{ marginBottom: '6px' }}><strong>Step 2:</strong> Look for email from <em>FormSubmit</em> titled <em>"Action Required: Activate your form"</em>.</div>
+                    <div><strong>Step 3:</strong> Click the <strong>"Activate Form"</strong> button.</div>
+                  </div>
+                </div>
+
+                <p style={{ fontSize: '0.84rem', color: 'var(--fg-muted)', maxWidth: '440px', marginBottom: '1.2rem' }}>
+                  After activating once, all future messages sent through this form will arrive straight in your Gmail inbox!
+                </p>
+
+                <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <a
+                    href="https://mail.google.com/mail/u/0/#search/from%3Aformsubmit"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-primary"
+                    style={{ fontSize: '0.88rem', padding: '0.65rem 1.2rem' }}
+                  >
+                    <span>Open Gmail Search</span>
+                    <ExternalLink size={14} style={{ marginLeft: '6px' }} />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setSubmitView('idle')}
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.88rem', padding: '0.65rem 1.2rem' }}
+                  >
+                    <span>I've Activated / Back to Form</span>
+                  </button>
+                </div>
+              </div>
+            ) : submitView === 'success' ? (
               <div className="contact-success-screen" role="status" aria-live="polite">
                 <div className="success-icon-badge">
                   <CheckCircle2 size={46} color="var(--accent)" aria-hidden="true" />
                 </div>
                 <h3 className="success-screen-title">Message Sent Successfully!</h3>
+                
                 <p className="success-screen-desc">
-                  Thank you, <strong style={{ color: '#ffffff' }}>{submittedName}</strong>! Your message has been received and delivered to <strong style={{ color: 'var(--accent)' }}>{PORTFOLIO_DATA.personal.email}</strong>. I will get back to you as soon as possible.
+                  Thank you, <strong style={{ color: '#ffffff' }}>{submittedName}</strong>! Your message has been delivered directly to <strong style={{ color: 'var(--accent)' }}>{PORTFOLIO_DATA.personal.email}</strong>. I will get back to you as soon as possible.
                 </p>
+
                 <button
                   type="button"
-                  onClick={() => setSubmitSuccess(false)}
+                  onClick={() => setSubmitView('idle')}
                   className="btn btn-secondary"
                   style={{ marginTop: '1.2rem' }}
                 >
@@ -229,6 +326,7 @@ export default function Contact() {
                 
                 {errorMessage && (
                   <div className="form-error-banner" role="alert">
+                    <AlertCircle size={16} style={{ display: 'inline', marginRight: '6px' }} />
                     {errorMessage}
                   </div>
                 )}
