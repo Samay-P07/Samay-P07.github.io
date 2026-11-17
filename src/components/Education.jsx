@@ -10,7 +10,7 @@ export default function Education() {
         {/* Section Header */}
         <div className="section-header">
           <div className="section-tag">
-            <span>05 // ACADEMIC BACKGROUND &amp; LANGUAGES</span>
+            <span>04 // ACADEMIC BACKGROUND &amp; LANGUAGES</span>
           </div>
           <h2 className="section-title">
             Education &amp; <span className="font-serif-italic">Languages</span>

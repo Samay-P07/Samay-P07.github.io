@@ -37,10 +37,10 @@ export default function App() {
       <main id="main-content">
         <Hero />
         <About />
-        <Skills />
         <Experience />
         <Projects />
         <Education />
+        <Skills />
         <Contact />
       </main>
 

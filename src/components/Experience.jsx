@@ -10,7 +10,7 @@ export default function Experience() {
         {/* Section Header */}
         <div className="section-header">
           <div className="section-tag">
-            <span>03 // PROFESSIONAL EXPERIENCE</span>
+            <span>02 // PROFESSIONAL EXPERIENCE</span>
           </div>
           <h2 className="section-title">
             Internship <span className="font-serif-italic">Experience</span>

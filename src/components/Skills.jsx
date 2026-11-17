@@ -315,7 +315,7 @@ export default function Skills() {
           <div className="skills-author-callsign">
             <span>SAMAY PATEL</span>
             <span className="callsign-sep">•</span>
-            <span className="callsign-tag">02 // TECHNICAL ARSENAL</span>
+            <span className="callsign-tag">05 // TECHNICAL ARSENAL</span>
           </div>
 
           <h2 className="skills-headline">

@@ -17,7 +17,7 @@ export default function Projects() {
         {/* Section Header */}
         <div className="section-header">
           <div className="section-tag">
-            <span>04 // FEATURED PROJECTS</span>
+            <span>03 // FEATURED PROJECTS</span>
           </div>
           <h2 className="section-title">
             Academic &amp; <span className="font-serif-italic">Engineering Projects</span>
