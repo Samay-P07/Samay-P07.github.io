@@ -1230,6 +1230,31 @@ body.has-custom-cursor .reticle {
   font-family: var(--font-mono);
 }
 
+.tech-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 1.1rem;
+}
+
+.tech-pill {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--fg-soft);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.02em;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.tech-pill:hover {
+  border-color: rgba(143, 202, 255, 0.4);
+  color: #ffffff;
+  background: rgba(143, 202, 255, 0.08);
+}
+
 /* ==========================================================================
    PROJECTS SECTION (Premium Compact Horizontal Editorial Showcase)
    ========================================================================== */
@@ -1705,7 +1730,8 @@ body.has-custom-cursor .reticle {
 }
 
 .coursework-block {
-  padding-top: 1rem;
+  padding-top: 1.1rem;
+  margin-top: 0.5rem;
   border-top: 1px solid var(--line);
 }
 
@@ -1715,10 +1741,37 @@ body.has-custom-cursor .reticle {
   gap: 0.5rem;
   font-family: var(--font-mono);
   font-size: var(--t-micro);
-  letter-spacing: 0.15em;
+  letter-spacing: 0.14em;
   color: var(--accent);
   text-transform: uppercase;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.65rem;
+}
+
+.coursework-list {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--fg);
+  margin: 0;
+}
+
+.coursework-item {
+  color: #ffffff;
+  font-weight: 450;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease;
+}
+
+.coursework-item:hover {
+  color: var(--accent);
+}
+
+.coursework-sep {
+  color: var(--accent);
+  margin: 0 0.55rem;
+  font-family: var(--font-mono);
+  font-weight: 300;
+  opacity: 0.75;
+  user-select: none;
 }
 
 .languages-card {

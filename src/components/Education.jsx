@@ -52,13 +52,19 @@ export default function Education() {
                       <BookOpen size={13} aria-hidden="true" />
                       <span>Relevant Coursework:</span>
                     </div>
-                    <div className="tech-tag-row">
-                      {edu.coursework.map((course) => (
-                        <span key={course} className="tech-pill">
-                          {course}
-                        </span>
+                    <p className="coursework-list" aria-label="Relevant coursework subjects">
+                      {edu.coursework.map((course, idx) => (
+                        <React.Fragment key={course}>
+                          <span className="coursework-item">{course}</span>
+                          {idx < edu.coursework.length - 1 && (
+                            <span className="coursework-sep" aria-hidden="true">
+                              {' '}
+                              |{' '}
+                            </span>
+                          )}
+                        </React.Fragment>
                       ))}
-                    </div>
+                    </p>
                   </div>
                 )}
               </div>
