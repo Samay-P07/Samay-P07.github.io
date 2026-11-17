@@ -144,12 +144,25 @@ img, svg {
   }
 }
 
+@media (max-width: 480px) {
+  .container {
+    padding: 0 1rem;
+  }
+}
+
 /* Section Shell & Heading Protection */
 .section {
   position: relative;
   padding: 6.5rem 0;
   scroll-margin-top: 5.5rem;
   z-index: 2;
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 4.2rem 0;
+    scroll-margin-top: 4.5rem;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -162,6 +175,12 @@ img, svg {
 /* Section Header Motif */
 .section-header {
   margin-bottom: 3.5rem;
+}
+
+@media (max-width: 768px) {
+  .section-header {
+    margin-bottom: 2.2rem;
+  }
 }
 
 .section-tag {

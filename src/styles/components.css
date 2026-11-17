@@ -476,6 +476,18 @@ body.has-custom-cursor .reticle {
   margin-bottom: 2.8rem;
 }
 
+@media (max-width: 640px) {
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .hero-social-bar {
   display: flex;
   flex-wrap: wrap;
@@ -486,6 +498,19 @@ body.has-custom-cursor .reticle {
   font-family: var(--font-mono);
   font-size: var(--t-label);
   letter-spacing: var(--track-mono);
+}
+
+@media (max-width: 640px) {
+  .hero-social-bar {
+    gap: 1rem;
+    justify-content: space-between;
+  }
+  .hero-loc-pill {
+    margin-left: 0;
+    width: 100%;
+    text-align: left;
+    margin-top: 0.2rem;
+  }
 }
 
 .hero-social-link {
@@ -865,7 +890,7 @@ body.has-custom-cursor .reticle {
   overflow: hidden;
   cursor: grab;
   user-select: none;
-  touch-action: none;
+  touch-action: pan-y;
   background: radial-gradient(circle at 50% 50%, rgba(14, 28, 56, 0.25) 0%, rgba(5, 7, 15, 0.6) 65%, transparent 100%);
   border-radius: var(--radius-lg);
   border: 1px solid rgba(143, 202, 255, 0.08);
@@ -877,8 +902,9 @@ body.has-custom-cursor .reticle {
 
 @media (max-width: 640px) {
   .skills-cloud-viewport {
-    height: 480px;
+    height: 440px;
     border-radius: var(--radius-md);
+    touch-action: pan-y;
   }
 }
 
@@ -1148,6 +1174,27 @@ body.has-custom-cursor .reticle {
   padding: 2.2rem;
   backdrop-filter: blur(12px);
   transition: border-color 0.25s ease, transform 0.25s ease;
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .timeline-content-card {
+    padding: 1.35rem 1.1rem;
+    border-radius: var(--radius-sm);
+  }
+  .exp-role {
+    font-size: 1.45rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .timeline-content-card {
+    padding: 1.1rem 0.85rem;
+  }
+  .timeline-item {
+    gap: 0.8rem;
+  }
 }
 
 .timeline-content-card:hover {
@@ -1280,6 +1327,25 @@ body.has-custom-cursor .reticle {
   gap: 1.8rem;
   align-items: center;
   transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s var(--ease-out);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .editorial-project-card {
+    padding: 1.35rem 1.1rem;
+    gap: 1.35rem;
+    border-radius: var(--radius-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .editorial-project-card {
+    padding: 1rem 0.85rem;
+    gap: 1.1rem;
+  }
 }
 
 .editorial-project-card:hover {
@@ -1317,11 +1383,15 @@ body.has-custom-cursor .reticle {
 /* Media Column & Compact Aspect Ratio */
 .editorial-media-column {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .editorial-media-frame {
   position: relative;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   aspect-ratio: 16 / 10;
   background: #080d1c;
   border-radius: var(--radius-sm);
@@ -1403,6 +1473,8 @@ body.has-custom-cursor .reticle {
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .editorial-meta-row {
@@ -1435,12 +1507,14 @@ body.has-custom-cursor .reticle {
 
 .editorial-project-title {
   font-family: var(--font-display);
-  font-size: clamp(1.65rem, 2.4vw, 2.2rem);
+  font-size: clamp(1.45rem, 2.3vw, 2.2rem);
   font-weight: 400;
   color: #ffffff;
   line-height: 1.15;
   letter-spacing: -0.01em;
   margin: 0.2rem 0 0.55rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .editorial-project-desc {
@@ -1460,12 +1534,25 @@ body.has-custom-cursor .reticle {
   border-radius: var(--radius-sm);
   padding: 0.65rem 0.85rem;
   margin-bottom: 0.95rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .editorial-metrics-strip {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.6rem;
+    gap: 0.55rem 0.65rem;
+    padding: 0.65rem 0.75rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .editorial-metrics-strip {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+    padding: 0.55rem 0.6rem;
   }
 }
 
@@ -1473,14 +1560,19 @@ body.has-custom-cursor .reticle {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .chip-label {
   font-family: var(--font-mono);
   font-size: 0.58rem;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chip-value {
@@ -1493,12 +1585,25 @@ body.has-custom-cursor .reticle {
   text-overflow: ellipsis;
 }
 
+@media (max-width: 480px) {
+  .chip-label {
+    font-size: 0.52rem;
+    letter-spacing: 0.05em;
+  }
+  .chip-value {
+    font-size: 0.74rem;
+  }
+}
+
 /* Compact Tech Badges */
 .editorial-tech-ribbon {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
   margin-bottom: 1.15rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .tech-badge {
@@ -1509,6 +1614,7 @@ body.has-custom-cursor .reticle {
   border: 1px solid rgba(143, 202, 255, 0.14);
   padding: 0.2rem 0.55rem;
   border-radius: var(--radius-xs);
+  white-space: nowrap;
 }
 
 /* Action Buttons */
@@ -1519,6 +1625,16 @@ body.has-custom-cursor .reticle {
   flex-wrap: wrap;
   padding-top: 0.95rem;
   border-top: 1px solid var(--line);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.editorial-actions-bar .btn-sm {
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  padding: 0.55rem 0.95rem;
 }
 
 .details-toggle-btn {
@@ -1533,10 +1649,36 @@ body.has-custom-cursor .reticle {
 }
 
 @media (max-width: 640px) {
-  .details-toggle-btn {
-    margin-left: 0;
+  .editorial-actions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
     width: 100%;
+  }
+
+  .editorial-actions-bar .btn-sm {
+    flex: 1 1 calc(50% - 0.35rem);
+    min-width: 115px;
     justify-content: center;
+    padding: 0.6rem 0.45rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-align: center;
+  }
+
+  .editorial-actions-bar .details-toggle-btn {
+    flex: 1 1 100%;
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
+    padding: 0.6rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .editorial-actions-bar .btn-sm {
+    flex: 1 1 100%;
+    width: 100%;
   }
 }
 
@@ -1548,6 +1690,29 @@ body.has-custom-cursor .reticle {
   border: 1px solid rgba(143, 202, 255, 0.22);
   border-radius: var(--radius-sm);
   animation: drawerSlideDown 0.25s ease;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .editorial-expanded-drawer {
+    padding: 0.95rem 0.75rem;
+    margin-top: 0.9rem;
+  }
+
+  .drawer-highlights-list li {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    gap: 0.5rem;
+  }
+
+  .drawer-footer-row {
+    font-size: 0.68rem;
+  }
 }
 
 @keyframes drawerSlideDown {
@@ -1655,6 +1820,21 @@ body.has-custom-cursor .reticle {
   padding: 2.2rem;
   backdrop-filter: blur(12px);
   transition: border-color 0.22s ease, transform 0.22s ease;
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .degree-card {
+    padding: 1.35rem 1.1rem;
+    border-radius: var(--radius-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .degree-card {
+    padding: 1.1rem 0.85rem;
+  }
 }
 
 .degree-card:hover {
@@ -1782,6 +1962,21 @@ body.has-custom-cursor .reticle {
   backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .languages-card {
+    padding: 1.35rem 1.1rem;
+    border-radius: var(--radius-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .languages-card {
+    padding: 1.1rem 0.85rem;
+  }
 }
 
 .lang-header {
@@ -1907,6 +2102,21 @@ body.has-custom-cursor .reticle {
   border-radius: var(--radius-md);
   padding: 2.5rem;
   backdrop-filter: blur(16px);
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .contact-form-panel {
+    padding: 1.5rem 1.15rem;
+    border-radius: var(--radius-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-form-panel {
+    padding: 1.25rem 0.9rem;
+  }
 }
 
 .contact-success-screen {
